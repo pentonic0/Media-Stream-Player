@@ -1,0 +1,443 @@
+@import "tailwindcss";
+
+@import "m3-svelte/misc/styles.css";
+@import "m3-svelte/misc/recommended-styles.css";
+
+@import "shaka-player/dist/controls.css";
+
+/* dm-sans-regular - latin */
+@font-face {
+  font-display: swap;
+  /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+  font-family: "DM Sans";
+  font-style: normal;
+  font-weight: 400;
+  src: url("/fonts/dm-sans-v15-latin-regular.woff2") format("woff2");
+  /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+}
+
+/* dm-sans-500 - latin */
+@font-face {
+  font-display: swap;
+  /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+  font-family: "DM Sans";
+  font-style: normal;
+  font-weight: 500;
+  src: url("/fonts/dm-sans-v15-latin-500.woff2") format("woff2");
+  /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+}
+
+/* dm-sans-600 - latin */
+@font-face {
+  font-display: swap;
+  /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+  font-family: "DM Sans";
+  font-style: normal;
+  font-weight: 600;
+  src: url("/fonts/dm-sans-v15-latin-600.woff2") format("woff2");
+  /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+}
+
+/* dm-sans-700 - latin */
+@font-face {
+  font-display: swap;
+  /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+  font-family: "DM Sans";
+  font-style: normal;
+  font-weight: 700;
+  src: url("/fonts/dm-sans-v15-latin-700.woff2") format("woff2");
+  /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+}
+
+/* dm-sans-800 - latin */
+@font-face {
+  font-display: swap;
+  /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+  font-family: "DM Sans";
+  font-style: normal;
+  font-weight: 800;
+  src: url("/fonts/dm-sans-v15-latin-800.woff2") format("woff2");
+  /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+}
+
+/* dm-sans-900 - latin */
+@font-face {
+  font-display: swap;
+  /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+  font-family: "DM Sans";
+  font-style: normal;
+  font-weight: 900;
+  src: url("/fonts/dm-sans-v15-latin-900.woff2") format("woff2");
+  /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+}
+
+@import "m3-svelte/misc/styles.css";
+@import "m3-svelte/misc/recommended-styles.css";
+:root {
+  color-scheme: dark;
+}
+
+:root,
+::backdrop {
+  --m3-scheme-background: 20 22 23;
+  --m3-scheme-on-background: 229 232 235;
+  --m3-scheme-surface: 20 22 23;
+  --m3-scheme-surface-dim: 20 22 23;
+  --m3-scheme-surface-bright: 48 50 52;
+  --m3-scheme-surface-container-lowest: 10 12 13;
+  --m3-scheme-surface-container-low: 25 27 28;
+  --m3-scheme-surface-container: 30 32 34;
+  --m3-scheme-surface-container-high: 36 38 40;
+  --m3-scheme-surface-container-highest: 42 44 46;
+  --m3-scheme-on-surface: 229 232 235;
+  --m3-scheme-on-surface-variant: 171 175 178;
+  --m3-scheme-outline: 117 121 124;
+  --m3-scheme-outline-variant: 72 76 79;
+  --m3-scheme-inverse-surface: 242 245 248;
+  --m3-scheme-inverse-on-surface: 85 89 92;
+  --m3-scheme-primary: 36 161 222;
+  --m3-scheme-primary-dim: 32 145 200;
+  --m3-scheme-on-primary: 255 255 255;
+  --m3-scheme-primary-container: 32 145 200;
+  --m3-scheme-on-primary-container: 255 255 255;
+  --m3-scheme-primary-fixed: 36 161 222;
+  --m3-scheme-primary-fixed-dim: 32 145 200;
+  --m3-scheme-on-primary-fixed: 255 255 255;
+  --m3-scheme-on-primary-fixed-variant: 0 112 156;
+  --m3-scheme-inverse-primary: 0 112 156;
+  --m3-scheme-secondary: 190 200 219;
+  --m3-scheme-secondary-dim: 170 180 199;
+  --m3-scheme-on-secondary: 61 66 81;
+  --m3-scheme-secondary-container: 56 61 76;
+  --m3-scheme-on-secondary-container: 182 192 211;
+  --m3-scheme-secondary-fixed: 218 228 248;
+  --m3-scheme-secondary-fixed-dim: 204 214 234;
+  --m3-scheme-on-secondary-fixed: 60 65 80;
+  --m3-scheme-on-secondary-fixed-variant: 89 94 109;
+  --m3-scheme-tertiary: 235 201 216;
+  --m3-scheme-tertiary-dim: 222 186 202;
+  --m3-scheme-on-tertiary: 94 63 76;
+  --m3-scheme-tertiary-container: 222 186 202;
+  --m3-scheme-on-tertiary-container: 84 54 67;
+  --m3-scheme-tertiary-fixed: 222 186 202;
+  --m3-scheme-tertiary-fixed-dim: 208 173 188;
+  --m3-scheme-on-tertiary-fixed: 61 35 47;
+  --m3-scheme-on-tertiary-fixed-variant: 94 63 76;
+  --m3-scheme-error: 235 113 100;
+  --m3-scheme-error-dim: 198 52 46;
+  --m3-scheme-on-error: 64 0 2;
+  --m3-scheme-error-container: 152 12 18;
+  --m3-scheme-on-error-container: 235 184 176;
+  --m3-scheme-shadow: 0 0 0;
+  --m3-scheme-scrim: 0 0 0;
+  --m3-scheme-on-on-primary: 36 161 222;
+  --m3-scheme-primary-container-subtle: 0 90 124;
+  --m3-scheme-on-primary-container-subtle: 36 161 222;
+  --m3-scheme-secondary-container-subtle: 41 46 60;
+  --m3-scheme-on-secondary-container-subtle: 162 172 191;
+  --m3-scheme-tertiary-container-subtle: 59 33 45;
+  --m3-scheme-on-tertiary-container-subtle: 190 157 172;
+  --m3-scheme-error-container-subtle: 76 0 4;
+  --m3-scheme-on-error-container-subtle: 235 137 125;
+}
+
+html {
+  font-size: 15px;
+  user-select: none;
+  background: rgb(var(--m3-scheme-background));
+}
+
+:root {
+  --m3-font: "DM Sans", system-ui, sans-serif;
+  --m3-font-body: "DM Sans", system-ui, sans-serif;
+  --m3-font-body-large-size: 0.9rem;
+  --navbar-height: 34px;
+}
+
+.appbar {
+  background: rgb(var(--m3-scheme-surface-container-lowest));
+  box-shadow: var(--m3-util-elevation-2);
+  z-index: 9999;
+}
+
+.titlebar-button {
+  color: #fff;
+}
+
+.titlebar-button.min-max:hover {
+  background: rgb(var(--m3-scheme-surface-container-low));
+
+  color: #fff;
+}
+
+@theme {
+  --default-font-family: "DM Sans", system-ui, sans-serif;
+  --text-sm: 0.8rem;
+  --text-base: 0.9rem;
+  --primary: var(--md-sys-color-primary);
+}
+
+:focus-visible:not(.focus-inset, .focus-none) {
+  animation: none !important;
+}
+
+.fw-input .m3-container {
+  width: 100%;
+}
+
+.text-error {
+  color: rgb(var(--m3-scheme-error));
+}
+
+/* Backgrounds */
+.bg-background {
+  @apply bg-[rgb(var(--m3-scheme-background))];
+}
+.bg-surface {
+  @apply bg-[rgb(var(--m3-scheme-surface))];
+}
+.bg-surface-dim {
+  @apply bg-[rgb(var(--m3-scheme-surface-dim))];
+}
+.bg-primary {
+  @apply bg-[rgb(var(--m3-scheme-primary))];
+}
+
+.bg-primary-dim {
+  @apply bg-[rgb(var(--m3-scheme-primary-dim))];
+}
+
+.bg-primary-container {
+  @apply bg-[rgb(var(--m3-scheme-primary-container))];
+}
+.bg-secondary {
+  @apply bg-[rgb(var(--m3-scheme-secondary))];
+}
+.bg-tertiary {
+  @apply bg-[rgb(var(--m3-scheme-tertiary))];
+}
+.bg-error {
+  @apply bg-[rgb(var(--m3-scheme-error))];
+}
+
+/* Text colors */
+.text-on-background {
+  @apply text-[rgb(var(--m3-scheme-on-background))];
+}
+.text-on-surface {
+  @apply text-[rgb(var(--m3-scheme-on-surface))];
+}
+.text-on-primary {
+  @apply text-[rgb(var(--m3-scheme-on-primary))];
+}
+.text-on-primary-container {
+  @apply text-[rgb(var(--m3-scheme-on-primary-container))];
+}
+.text-on-secondary {
+  @apply text-[rgb(var(--m3-scheme-on-secondary))];
+}
+.text-on-tertiary {
+  @apply text-[rgb(var(--m3-scheme-on-tertiary))];
+}
+.text-on-error {
+  @apply text-[rgb(var(--m3-scheme-on-error))];
+}
+
+/* Borders / outlines */
+.border-outline {
+  @apply border-[rgb(var(--m3-scheme-outline))];
+}
+.border-outline-variant {
+  @apply border-[rgb(var(--m3-scheme-outline-variant))];
+}
+
+.liv-theme.shaka-video-container {
+  font-family: var(--m3-font-body);
+}
+
+.player-modal dialog {
+  max-width: 80vw !important;
+  min-width: 80vw !important;
+  width: 80vw !important;
+}
+
+.player-modal dialog,
+.player-modal dialog .content {
+  overflow: hidden;
+  padding: 0 !important;
+}
+
+.player-modal dialog .content {
+  margin: 0 !important;
+}
+
+.player-modal .headline {
+  font-size: var(--text-body);
+  font-weight: 500;
+  padding: 1rem 1.5rem;
+  margin: 0 !important;
+}
+
+.about-modal .headline {
+  font-size: var(--text-body);
+
+  font-weight: 500;
+}
+
+.about-modal dialog {
+  max-width: 25rem !important;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(var(--m3-scheme-surface-bright)) transparent;
+}
+
+#content {
+  margin-top: var(--navbar-height);
+  overflow-y: auto;
+  scrollbar-color: transparent transparent;
+}
+
+#content:hover,
+#content:focus,
+#content:active {
+  scrollbar-color: rgba(var(--m3-scheme-surface-bright)) transparent;
+}
+
+body {
+  overflow: hidden;
+  height: 100vh;
+}
+
+*,
+a,
+button,
+select&:enabled {
+  cursor: default !important;
+  user-select: none;
+}
+
+.appbar {
+  height: var(--navbar-height);
+}
+
+.window-controls {
+  user-select: none;
+  -webkit-user-drag: none;
+  height: var(--navbar-height);
+}
+
+.titlebar-button {
+  height: 100%;
+  width: 2.8rem;
+  cursor: default;
+}
+
+.liv-theme .shaka-overflow-menu,
+.liv-theme .shaka-settings-menu {
+  min-width: 240px;
+}
+
+.liv-theme .shaka-back-to-overflow-button {
+  svg {
+    height: auto;
+    width: 28px;
+    cursor: pointer !important;
+  }
+  cursor: pointer !important;
+}
+.liv-theme .shaka-back-to-overflow-button span {
+  cursor: pointer !important;
+}
+
+.liv-theme button.explicit-resolution {
+  gap: 0.5rem;
+  font-size: 13px;
+}
+
+.liv-theme .shaka-overflow-menu,
+.shaka-settings-menu {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(var(--m3-scheme-primary) / 0.3) transparent;
+}
+
+.liv-theme .shaka-overflow-menu .material-svg-icon.shaka-chosen-item,
+.shaka-settings-menu .material-svg-icon.shaka-chosen-item {
+  height: auto;
+  width: 28px;
+}
+
+.liv-theme.shaka-video-container .material-svg-icon {
+  font-size: 30px !important;
+}
+
+.liv-theme .shaka-current-selection-span {
+  font-size: 13px;
+}
+
+.liv-theme .shaka-volume-bar-container {
+  width: 70px;
+}
+
+.liv-theme .shaka-volume-bar-container:hover {
+  width: 70px !important;
+}
+
+@media (min-width: 475px) {
+  .liv-theme
+    .shaka-mute-button:hover
+    + .shaka-volume-bar-container-allow-hiding {
+    width: 70px;
+  }
+}
+
+.shaka-tooltips-on > .shaka-tooltip-status:active:after,
+.shaka-tooltips-on > .shaka-tooltip-status:focus-visible:after,
+.shaka-tooltips-on > .shaka-tooltip-status:hover:after,
+.shaka-tooltips-on > .shaka-tooltip:active:after,
+.shaka-tooltips-on > .shaka-tooltip:focus-visible:after,
+.shaka-tooltips-on > .shaka-tooltip:hover:after {
+  font-family: var(--m3-font-body) !important;
+}
+
+.shaka-text-container {
+  margin-bottom: 1.5rem;
+}
+
+.shaka-skip-live-button {
+  position: absolute;
+  top: 0;
+  display: flex;
+  height: 1.5rem;
+  width: 3.5rem;
+  padding: 0.5rem;
+  justify-content: center;
+  background: rgb(var(--m3-scheme-error-container));
+  color: #fff;
+  align-items: center;
+  font-weight: 500;
+  border-radius: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.modal-backdrop {
+  background-color: rgb(var(--m3-scheme-scrim) / 0.3);
+  animation: opacity var(--m3-util-curve-decel) 500ms;
+  position: absolute;
+  z-index: -1;
+  top: var(--navbar-height);
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+}
+
+.modal-open .modal-backdrop {
+  opacity: 1;
+  z-index: 20;
+}
+
+dialog {
+  z-index: 100;
+}
