@@ -2,6 +2,8 @@
 
 Play HLS and DASH streams on Windows, with support for Clearkey, Widevine, and PlayReady DRM. No CORS issues to worry about. Pass your own `Referer`, `Origin`, `Cookie` `User-Agent` or any other forbidden/custom headers. Think of it as Android's [Network Stream Player (NS Player)](https://play.google.com/store/apps/details?id=com.genuine.leone&hl=en) but for Windows.
 
+![Screenshot of Media Stream Player](https://i.postimg.cc/Dwptzm52/image.png)
+
 ## Features
 
 - Plays HLS and DASH streams
