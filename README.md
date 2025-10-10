@@ -14,6 +14,7 @@ Play HLS and DASH streams on Windows, with support for Clearkey, Widevine, and P
 - Includes all standard Shaka Player features: adaptive bitrate, multiple resolution options, audio track selection, captions, picture-in-picture
 - Lets you override Shaka config with your own JSON object
 - Portable app, no installation required, just run it
+- Paste cuRL(bash) command or NS Player style URL in the Streaming URL for autocomplete
 
 ## Backstory
 
