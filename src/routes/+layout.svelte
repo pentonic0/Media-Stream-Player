@@ -5,6 +5,8 @@
   import { invoke } from "@tauri-apps/api/core";
   import { getCurrentWindow } from "@tauri-apps/api/window";
 
+  import { Menu, PredefinedMenuItem } from "@tauri-apps/api/menu";
+
   const fullscreenchanged = async () => {
     const appWindow = getCurrentWindow();
 
@@ -20,8 +22,6 @@
   };
 
   const disableUserInteraction = () => {
-    document.addEventListener("contextmenu", (event) => event.preventDefault());
-
     document.addEventListener("keydown", function (event) {
       // Prevent F5 or Ctrl+R (Windows/Linux) and Command+R (Mac) from refreshing the page
       if (
@@ -41,6 +41,42 @@
 
   onMount(async () => {
     document.addEventListener("fullscreenchange", fullscreenchanged);
+
+    const copy = await PredefinedMenuItem.new({
+      text: "Copy",
+      item: "Copy",
+    });
+
+    const cut = await PredefinedMenuItem.new({
+      text: "Cut",
+      item: "Cut",
+    });
+
+    const paste = await PredefinedMenuItem.new({
+      text: "Paste",
+      item: "Paste",
+    });
+
+    const select_all = await PredefinedMenuItem.new({
+      text: "Select All",
+      item: "SelectAll",
+    });
+
+    const menu = await Menu.new({
+      items: [copy, cut, paste, select_all],
+    });
+
+    document.addEventListener("contextmenu", async (event) => {
+      if (import.meta.env.DEV) {
+        return;
+      }
+      event.preventDefault();
+      const target = /** @type {HTMLElement} */ (event.target);
+
+      if (["TEXTAREA", "INPUT"].includes(target.tagName)) {
+        await menu.popup();
+      }
+    });
 
     requestIdleCallback(() => {
       // Finally show the window

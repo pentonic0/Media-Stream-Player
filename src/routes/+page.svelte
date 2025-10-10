@@ -5,30 +5,30 @@
     FAB,
     Button,
     Icon,
+    Snackbar,
     TextFieldMultiline,
   } from "m3-svelte";
   import { tick } from "svelte";
-
   import { openUrl } from "@tauri-apps/plugin-opener";
-
+  import JSON5 from "json5";
   import playCircleIcon from "@iconify-icons/mdi/play-circle";
   import aboutCircleIcon from "@iconify-icons/mdi/about-circle";
   import webIcon from "@iconify-icons/mdi/web";
   import facebookIcon from "@iconify-icons/mdi/facebook";
   import githubIcon from "@iconify-icons/mdi/github";
-
   import closeIcon from "@iconify-icons/mdi/close";
-
   import refreshIcon from "@iconify-icons/mdi/refresh";
-
   import VideoPlayer from "$lib/components/VideoPlayer.svelte";
   import Dialog from "$lib/components/Dialog.svelte";
-
   import parseCurl from "parse-curl";
-  import { form } from "$app/server";
 
   let isModalOpen,
     isAboutOpen = false;
+
+  /**
+   * @type {Snackbar}
+   */
+  let snackbar;
 
   let defaultFormData = {
     streamUrl: "",
@@ -44,7 +44,6 @@
     certificateUrl: "",
     certificateHeaders: "",
     requestHeaders: "",
-
     shakaConfig: "",
   };
 
@@ -76,7 +75,7 @@
      * @param value {String}
      */
     streamUrl: (value) => {
-      if (!value.trim()) return "Stream URL is required";
+      if (!value.toString().trim()) return "Stream URL is required";
 
       try {
         new URL(value);
@@ -87,33 +86,55 @@
       return null;
     },
 
+    /**
+     *
+     * @param value {String}
+     */
     shakaConfig: (value) => {
-      if (!value.trim()) return null;
+      if (!value.toString().trim()) return null;
 
       try {
-        JSON.parse(value);
+        JSON5.parse(value);
       } catch (e) {
-        return "Must be valid JSON";
+        return "Must be valid JSON/JSON5";
       }
 
       return null;
     },
-
-    /*
-    licenseUrl: (value) => {
-      if (formData.drmScheme !== "none" && !value.trim()) {
-        return "License URL is required when DRM is enabled.";
-      }
-      return null;
-    },*/
   };
 
   /**
    *
-   * @param event {Event|InputEvent}
+   * @param id {String}
    */
-  function validateField(event) {
-    const name = event.target.id;
+  const resetTextAreaHeight = (id) => {
+    const textarea = document.getElementById(id);
+
+    if (!textarea) {
+      return;
+    }
+
+    setTimeout(() => {
+      const spaceEvent = new InputEvent("input", {
+        bubbles: true,
+        cancelable: true,
+        inputType: "insertText",
+        data: "",
+      });
+      textarea.dispatchEvent(spaceEvent);
+    }, 0);
+  };
+
+  /**
+   *
+   * @param event {InputEvent|Object}
+   */
+  const validateField = (event) => {
+    const input = /** @type {HTMLInputElement | HTMLTextAreaElement} */ (
+      event.target
+    );
+    const name = input.id;
+
     const value = formData[name];
     const rule = rules[name];
     if (rule) {
@@ -125,8 +146,12 @@
         errors = rest;
       }
     }
-  }
+  };
 
+  /**
+   *
+   * @param event {ClipboardEvent}
+   */
   const handlePaste = (event) => {
     const pastedText = event.clipboardData.getData("text").trim();
     if (pastedText.startsWith("curl")) {
@@ -134,6 +159,14 @@
 
       try {
         const parsedData = parseCurl(pastedText);
+
+        if (!parsedData.url) {
+          throw new Error("Only cURL bash command is supported.");
+        }
+
+        snackbar.show({
+          message: "cURL command detected. Autofilled parameters.",
+        });
 
         formData.streamUrl = parsedData.url;
 
@@ -163,25 +196,80 @@
 
         formData.requestHeaders = headerText;
 
-        const textarea = document.getElementById("headers");
-
         // Dispatch an event to adjust textarea's height
-        setTimeout(() => {
-          const spaceEvent = new InputEvent("input", {
-            bubbles: true,
-            cancelable: true,
-            inputType: "insertText",
-            data: "",
-          });
-          textarea.dispatchEvent(spaceEvent);
-        }, 0);
+        resetTextAreaHeight("requestHeaders");
 
         validateField(event);
       } catch (error) {
-        alert("Invalid CURL command. " + error);
-        return;
+        snackbar.show({
+          message: "Invalid CURL command. " + error,
+        });
       }
+
+      return;
     }
+
+    // Try to detect NS Player formatted URLs (Hacky approach will improve later)
+
+    const decodedPaste = decodeURI(pastedText);
+
+    // Try to detect NS Player formatted URLs
+    if (decodedPaste.includes("|")) {
+      event.preventDefault();
+      const [url, search] = decodedPaste.split("|");
+
+      // Build a dummy URL to parse the searchParams
+      const nsPlayerURL = new URL("https://google.com?" + search.trim());
+
+      formData.streamUrl = url;
+
+      // Manually trigger validation
+      validateField(event);
+
+      const drmScheme = nsPlayerURL.searchParams.get("drmScheme");
+      const drmLicense = nsPlayerURL.searchParams.get("drmLicense");
+
+      let autofilled = false;
+
+      ["origin", "userAgent", "referer", "referrer", "cookie"].forEach(
+        (key) => {
+          const value = nsPlayerURL.searchParams.get(key);
+          if (value) {
+            formData[key === "referrer" ? "referer" : key] = value;
+            autofilled = true;
+          }
+        }
+      );
+
+      switch (drmScheme) {
+        case "clearkey":
+          // If a : is present it's inline otherwise it's a server
+          if (drmLicense.includes(":")) {
+            formData.drmScheme = "clearkey_inline";
+            formData.clearKey = drmLicense;
+          } else {
+            formData.drmScheme = "org.w3.clearkey";
+            formData.licenseUrl = drmLicense;
+          }
+          autofilled = true;
+          break;
+        default:
+          break;
+      }
+
+      snackbar.show({
+        message:
+          "NS Player URL detected. " +
+          (autofilled
+            ? "Autofilled parameters."
+            : "No supported paramters found."),
+      });
+
+      return;
+    }
+
+    // Validate field as a fallback
+    validateField(event);
   };
 
   const handleSubmit = (event) => {
@@ -225,6 +313,15 @@
 
   const resetFormData = () => {
     formData = { ...defaultFormData };
+    [
+      "requestHeaders",
+      "shakaConfig",
+      "licenseHeaders",
+      "certificateHeaders",
+    ].forEach((id) => {
+      resetTextAreaHeight(id);
+    });
+
     errors = {};
   };
 
@@ -240,6 +337,14 @@
         autocomplete="off"
         label="Stream URL"
         id="streamUrl"
+        onfocus={(e) => {
+          e.currentTarget.placeholder = e.currentTarget.value.length
+            ? ""
+            : "Paste NS Player URL or cURL command here for autofill";
+        }}
+        onblur={(e) => {
+          e.currentTarget.placeholder = "";
+        }}
         onpaste={handlePaste}
         class="w-full"
         bind:value={formData.streamUrl}
@@ -342,7 +447,7 @@
       <TextFieldMultiline
         autocomplete="off"
         label="Additional Headers"
-        id="headers"
+        id="requestHeaders"
         placeholder=""
         onfocus={handleHeadersPlaceholder}
         onblur={handleHeadersPlaceholderBlur}
@@ -380,12 +485,12 @@
       <div>
         <TextField
           autocomplete="off"
-          label="ClearKey:Value"
+          label="ClearKeyID:Key"
           id="clearKey"
           bind:value={formData.clearKey}
         />
         <span class="block text-on-surface mt-2 text-sm"
-          >Clearkey in kid:value format</span
+          >Clearkey in kid:key format</span
         >
       </div>
       <!-- ./mb-3 -->
@@ -482,7 +587,7 @@
       {#if errors.shakaConfig}
         {errors.shakaConfig}
       {:else}
-        Additional Shaka player configuration as JSON object
+        Additional Shaka player configuration as JSON/JSON5 object
       {/if}
     </span>
   </div>
@@ -525,6 +630,7 @@
     bind:open={isModalOpen}
     closedby="closerequest"
     closeOnEsc={true}
+    icon={false}
   >
     {#snippet children()}
       <Button
@@ -547,7 +653,7 @@
 </div>
 
 <div class="about-modal">
-  <Dialog headline="Media Stream Player" bind:open={isAboutOpen}>
+  <Dialog headline="Media Stream Player" bind:open={isAboutOpen} icon={false}>
     {#snippet children()}
       <p class="mb-3">
         &copy; {new Date().getFullYear()}. All rights reserved.
@@ -600,3 +706,5 @@
     {/snippet}
   </Dialog>
 </div>
+
+<Snackbar class="shaka-snack holder" bind:this={snackbar} />

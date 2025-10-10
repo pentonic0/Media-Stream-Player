@@ -19,6 +19,7 @@
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-http": "^2.5.2",
     "@tauri-apps/plugin-opener": "^2",
+    "json5": "^2.2.3",
     "m3-svelte": "^5.9.0",
     "parse-curl": "^0.2.6",
     "shaka-player": "^4.16.3",

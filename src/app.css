@@ -441,3 +441,12 @@ select&:enabled {
 dialog {
   z-index: 100;
 }
+
+.shaka-snack.holder .m3-container {
+  padding: 0.5rem 1.5rem;
+}
+
+input::placeholder,
+textarea::placeholder {
+  font-size: var(--text-sm) !important;
+}

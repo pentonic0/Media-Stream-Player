@@ -1,3 +1,5 @@
+import { dev_log } from "$lib";
+// @ts-ignore
 import shaka from "shaka-player/dist/shaka-player.ui.js";
 
 export class TauriFetchLoader {
@@ -101,6 +103,7 @@ export class TauriFetchLoader {
   ) {
     const { fetch } = await import("@tauri-apps/plugin-http");
 
+    // @ts-ignore
     init.danger = {
       acceptInvalidCerts: true,
       acceptInvalidHostnames: true,
@@ -149,7 +152,7 @@ export class TauriFetchLoader {
               // If we abort the request, we'll get an error here.  Just ignore
               // it since real errors will be reported when we read the buffer
               // below.
-              console.info(e);
+              dev_log(e);
               return;
             }
             if (!readObj.done) {
@@ -234,7 +237,7 @@ export class TauriFetchLoader {
   }
   /**
    * @param {!Headers} headers
-   * @return {!Object.<string, string>}
+   * @return {!Object.<String, String>}
    * @private
    */
   static headersToGenericObject_(headers) {

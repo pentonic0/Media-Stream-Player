@@ -72,3 +72,10 @@ export function isForbiddenHeader(header) {
 
   return forbiddenHeaders.includes(header.toLowerCase());
 }
+
+export function dev_log(...args) {
+  if (import.meta.env.DEV) {
+    // Only log in development
+    console.log(...args);
+  }
+}

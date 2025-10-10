@@ -9,15 +9,7 @@ declare global {
     // interface Platform {}
   }
 
-  interface Window {
-    electronAPI: {
-      minimize: () => Promise<void>;
-      toggleMaximize: () => Promise<void>;
-      close: () => Promise<void>;
-      showMainWindow: () => Promise<void>;
-      onMaximizeChange: (callback: (state: boolean) => void) => void;
-    };
-  }
+  interface Window {}
 
   // Define the shape of your object
   interface StreamFormData {
