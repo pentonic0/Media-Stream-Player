@@ -189,6 +189,10 @@ html {
   color: rgb(var(--m3-scheme-error));
 }
 
+.panel-card {
+  @apply rounded-2xl border border-[rgb(var(--m3-scheme-outline-variant))] bg-[rgb(var(--m3-scheme-surface-container))] p-5 shadow-sm;
+}
+
 /* Backgrounds */
 .bg-background {
   @apply bg-[rgb(var(--m3-scheme-background))];
