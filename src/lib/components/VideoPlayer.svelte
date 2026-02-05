@@ -223,10 +223,6 @@
 
     if (stream.userAgent.trim().length) {
       headers["user-agent"] = stream.userAgent.trim();
-    } else {
-      // Force an Android user-agent by default as most dash streams expect them for some reason
-      headers["user-agent"] =
-        "Dalvik/2.1.0 (Linux; U; Android 11; MI 6X Build/RQ3A.211001.001) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Mobile Safari/537.36";
     }
 
     if (stream.cookie.trim().length) {

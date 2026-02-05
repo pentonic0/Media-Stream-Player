@@ -8,11 +8,16 @@
     Snackbar,
     TextFieldMultiline,
   } from "m3-svelte";
-  import { tick } from "svelte";
+  import { onMount, tick } from "svelte";
   import { openUrl } from "@tauri-apps/plugin-opener";
   import JSON5 from "json5";
   import playCircleIcon from "@iconify-icons/mdi/play-circle";
   import aboutCircleIcon from "@iconify-icons/mdi/about-circle";
+  import bookmarkIcon from "@iconify-icons/mdi/bookmark";
+  import historyIcon from "@iconify-icons/mdi/history";
+  import contentSaveIcon from "@iconify-icons/mdi/content-save";
+  import pencilIcon from "@iconify-icons/mdi/pencil";
+  import trashIcon from "@iconify-icons/mdi/trash-can-outline";
   import webIcon from "@iconify-icons/mdi/web";
   import facebookIcon from "@iconify-icons/mdi/facebook";
   import githubIcon from "@iconify-icons/mdi/github";
@@ -67,6 +72,16 @@
   ];
 
   let errors = {};
+  let streamHistory = [];
+  let savedStreams = [];
+  let savedStreamName = "";
+  let editingSavedId = null;
+
+  const STORAGE_KEYS = {
+    history: "msp_stream_history",
+    saved: "msp_saved_streams",
+  };
+  const HISTORY_LIMIT = 12;
 
   // Define rules here
   const rules = {
@@ -102,6 +117,104 @@
       return null;
     },
   };
+
+  const createId = () =>
+    crypto?.randomUUID
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+  const getStreamPayload = (data) => {
+    const payload = {};
+    Object.keys(defaultFormData).forEach((key) => {
+      payload[key] = data[key] ?? defaultFormData[key];
+    });
+    return payload;
+  };
+
+  const loadStoredList = (key) => {
+    try {
+      const stored = localStorage.getItem(key);
+      if (!stored) {
+        return [];
+      }
+      const parsed = JSON.parse(stored);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+      console.warn("Failed to parse stored list", error);
+      return [];
+    }
+  };
+
+  const persistList = (key, value) => {
+    localStorage.setItem(key, JSON.stringify(value));
+  };
+
+  const updateHistory = (stream) => {
+    const payload = getStreamPayload(stream);
+    const signature = JSON.stringify(payload);
+    const newEntry = {
+      id: createId(),
+      lastPlayed: new Date().toISOString(),
+      signature,
+      stream: payload,
+    };
+    streamHistory = [
+      newEntry,
+      ...streamHistory.filter((item) => item.signature !== signature),
+    ].slice(0, HISTORY_LIMIT);
+    persistList(STORAGE_KEYS.history, streamHistory);
+  };
+
+  const updateSavedStreams = (streams) => {
+    savedStreams = streams;
+    persistList(STORAGE_KEYS.saved, savedStreams);
+  };
+
+  const applyStreamToForm = (stream) => {
+    formData = { ...defaultFormData, ...stream };
+    errors = {};
+    [
+      "requestHeaders",
+      "shakaConfig",
+      "licenseHeaders",
+      "certificateHeaders",
+    ].forEach((id) => resetTextAreaHeight(id));
+  };
+
+  const playStreamFromData = (stream) => {
+    const urlError = rules.streamUrl(stream.streamUrl);
+    if (urlError) {
+      snackbar?.show({ message: urlError });
+      return;
+    }
+    applyStreamToForm(stream);
+    updateHistory(stream);
+    isModalOpen = true;
+  };
+
+  const getStreamLabel = (stream) => {
+    try {
+      const url = new URL(stream.streamUrl);
+      return url.hostname || stream.streamUrl;
+    } catch (error) {
+      return stream.streamUrl || "Unknown stream";
+    }
+  };
+
+  const formatTimestamp = (value) => {
+    if (!value) {
+      return "Just now";
+    }
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime())
+      ? "Just now"
+      : parsed.toLocaleString();
+  };
+
+  onMount(() => {
+    streamHistory = loadStoredList(STORAGE_KEYS.history);
+    savedStreams = loadStoredList(STORAGE_KEYS.saved);
+  });
 
   /**
    *
@@ -285,6 +398,7 @@
       return;
     }
 
+    updateHistory(formData);
     isModalOpen = true;
   };
 
@@ -325,271 +439,510 @@
     errors = {};
   };
 
+  const saveStream = () => {
+    const name = savedStreamName.trim();
+    if (!name.length) {
+      snackbar?.show({ message: "Provide a name to save this stream." });
+      return;
+    }
+
+    const urlError = rules.streamUrl(formData.streamUrl);
+    if (urlError) {
+      snackbar?.show({ message: urlError });
+      return;
+    }
+
+    const payload = getStreamPayload(formData);
+    if (editingSavedId) {
+      updateSavedStreams(
+        savedStreams.map((item) =>
+          item.id === editingSavedId
+            ? {
+                ...item,
+                name,
+                updatedAt: new Date().toISOString(),
+                stream: payload,
+              }
+            : item
+        )
+      );
+      snackbar?.show({ message: "Saved stream updated." });
+    } else {
+      updateSavedStreams([
+        {
+          id: createId(),
+          name,
+          createdAt: new Date().toISOString(),
+          stream: payload,
+        },
+        ...savedStreams,
+      ]);
+      snackbar?.show({ message: "Stream saved for later." });
+    }
+
+    savedStreamName = "";
+    editingSavedId = null;
+  };
+
+  const editSavedStream = (item) => {
+    editingSavedId = item.id;
+    savedStreamName = item.name;
+    applyStreamToForm(item.stream);
+  };
+
+  const deleteSavedStream = (itemId) => {
+    updateSavedStreams(savedStreams.filter((item) => item.id !== itemId));
+  };
+
+  const clearHistory = () => {
+    streamHistory = [];
+    persistList(STORAGE_KEYS.history, streamHistory);
+  };
+
   $: isModalOpen
     ? document.body.classList.add("modal-open")
     : document.body.classList.remove("modal-open");
 </script>
 
-<div class="app-container">
-  <div class="grid grid-cols-12 gap-3 mb-4 fw-input">
-    <div class="md:col-span-8 col-span-7">
-      <TextField
-        autocomplete="off"
-        label="Stream URL"
-        id="streamUrl"
-        onfocus={(e) => {
-          e.currentTarget.placeholder = e.currentTarget.value.length
-            ? ""
-            : "Paste NS Player URL or cURL command here for autofill";
-        }}
-        onblur={(e) => {
-          e.currentTarget.placeholder = "";
-        }}
-        onpaste={handlePaste}
-        class="w-full"
-        bind:value={formData.streamUrl}
-        oninput={validateField}
-        error={errors.streamUrl}
-      />
-
-      <span
-        class={{
-          "text-error": errors.streamUrl,
-
-          "text-on-surface": !errors.streamUrl,
-          "mt-2 text-sm block": true,
-        }}
-      >
-        {#if errors.streamUrl}
-          {errors.streamUrl}
-        {:else}
-          The URL to the media stream
-        {/if}
-      </span>
-    </div>
-
-    <div class="md:col-span-4 col-span-5">
-      <Select
-        label="Type"
-        options={streamTypes}
-        bind:value={formData.streamType}
-      />
-      <span></span>
-
-      <span class="block text-on-surface mt-3 text-sm"
-        >Leave to auto if unsure.</span
-      >
-    </div>
-  </div>
-  <!-- ./grid -->
-
-  <div class="flex items-center my-6">
-    <h3 class="text-base font-semibold text-on-body">HEADERS</h3>
-    <div class="flex-grow border-t border-outline-variant ml-3"></div>
-  </div>
-  <!-- ./flex -->
-
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-3 fw-input">
+<div class="app-container space-y-6">
+  <div class="panel-card flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
     <div>
-      <TextField
-        autocomplete="off"
-        label="Cookie"
-        id="cookie"
-        bind:value={formData.cookie}
-      />
-      <span class="block text-on-surface mt-2 text-sm"
-        >Value for the Cookie header</span
-      >
+      <p class="text-xs uppercase tracking-widest text-on-surface">
+        Stream workspace
+      </p>
+      <h2 class="text-xl font-semibold text-on-body">Media Stream Player</h2>
+      <p class="text-sm text-on-surface">
+        Configure your stream once, save presets, and jump back to recent
+        sessions instantly.
+      </p>
     </div>
-    <!-- ./mb-3 -->
-
-    <div>
-      <TextField
-        autocomplete="off"
-        label="Origin"
-        id="origin"
-        bind:value={formData.origin}
-      />
-      <span class="block text-on-surface mt-2 text-sm"
-        >Value for the Origin header</span
+    <div class="flex flex-wrap gap-3">
+      <div
+        class="rounded-xl border border-outline-variant bg-[rgb(var(--m3-scheme-surface-container-low))] px-4 py-2"
       >
-    </div>
-    <!-- ./mb-3 -->
-
-    <div>
-      <TextField
-        autocomplete="off"
-        label="Referer"
-        id="referer"
-        bind:value={formData.referer}
-      />
-      <span class="block text-on-surface mt-2 text-sm"
-        >Value for the Referer header</span
-      >
-    </div>
-    <!-- ./mb-3 -->
-
-    <div>
-      <TextField
-        autocomplete="off"
-        label="User-Agent"
-        id="userAgent"
-        placeholder=""
-        bind:value={formData.userAgent}
-      />
-      <span class="block text-on-surface mt-2 text-sm"
-        >Value for the User-Agent header</span
-      >
-    </div>
-    <!-- ./mb-3 -->
-
-    <div class="col-span-1 md:col-span-2 mt-3">
-      <TextFieldMultiline
-        autocomplete="off"
-        label="Additional Headers"
-        id="requestHeaders"
-        placeholder=""
-        onfocus={handleHeadersPlaceholder}
-        onblur={handleHeadersPlaceholderBlur}
-        bind:value={formData.requestHeaders}
-      />
-      <span class="block text-on-surface mt-2 text-sm"
-        >Additional headers for the request in key: value format. One per line.</span
-      >
-    </div>
-  </div>
-  <!-- /.grid -->
-
-  <div class="flex items-center my-6">
-    <h3 class="text-base font-semibold text-on-body">DRM</h3>
-    <div class="flex-grow border-t border-outline-variant ml-3"></div>
-  </div>
-  <!-- ./flex -->
-
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-3 fw-input">
-    <div>
-      <Select
-        label="DRM Scheme"
-        id="drmScheme"
-        onchange={handleDrmSchemeChange}
-        options={drmSchemes}
-        bind:value={formData.drmScheme}
-      />
-      <span class="block text-on-surface mt-3 text-sm"
-        >Choose the DRM Scheme</span
-      >
-    </div>
-    <!-- ./mb-3 -->
-
-    {#if formData.drmScheme === "clearkey_inline"}
-      <div>
-        <TextField
-          autocomplete="off"
-          label="ClearKeyID:Key"
-          id="clearKey"
-          bind:value={formData.clearKey}
-        />
-        <span class="block text-on-surface mt-2 text-sm"
-          >Clearkey in kid:key format</span
-        >
+        <p class="text-xs text-on-surface">Saved</p>
+        <p class="text-base font-semibold text-on-body">
+          {savedStreams.length}
+        </p>
       </div>
-      <!-- ./mb-3 -->
-    {/if}
-
-    {#if !["none", "clearkey_inline"].includes(formData.drmScheme)}
-      <div>
-        <TextField
-          autocomplete="off"
-          label="License URL"
-          id="licenseUrl"
-          bind:value={formData.licenseUrl}
-        />
-        <span class="block text-on-surface mt-2 text-sm"
-          >The license server URL</span
-        >
+      <div
+        class="rounded-xl border border-outline-variant bg-[rgb(var(--m3-scheme-surface-container-low))] px-4 py-2"
+      >
+        <p class="text-xs text-on-surface">History</p>
+        <p class="text-base font-semibold text-on-body">
+          {streamHistory.length}
+        </p>
       </div>
+    </div>
+  </div>
 
-      {#if formData.drmScheme === "com.widevine.alpha" || formData.drmScheme === "com.microsoft.playready"}
-        <div>
-          <TextField
-            autocomplete="off"
-            label="Certificate URL"
-            id="certificateUrl"
-            bind:value={formData.certificateUrl}
-          />
-          <span class="block text-on-surface mt-2 text-sm"
-            >The certificate URL</span
-          >
+  <div class="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+    <div class="space-y-6">
+      <div class="panel-card space-y-6">
+        <div class="grid grid-cols-12 gap-3 fw-input">
+          <div class="md:col-span-8 col-span-7">
+            <TextField
+              autocomplete="off"
+              label="Stream URL"
+              id="streamUrl"
+              onfocus={(e) => {
+                e.currentTarget.placeholder = e.currentTarget.value.length
+                  ? ""
+                  : "Paste NS Player URL or cURL command here for autofill";
+              }}
+              onblur={(e) => {
+                e.currentTarget.placeholder = "";
+              }}
+              onpaste={handlePaste}
+              class="w-full"
+              bind:value={formData.streamUrl}
+              oninput={validateField}
+              error={errors.streamUrl}
+            />
+
+            <span
+              class={{
+                "text-error": errors.streamUrl,
+
+                "text-on-surface": !errors.streamUrl,
+                "mt-2 text-sm block": true,
+              }}
+            >
+              {#if errors.streamUrl}
+                {errors.streamUrl}
+              {:else}
+                The URL to the media stream
+              {/if}
+            </span>
+          </div>
+
+          <div class="md:col-span-4 col-span-5">
+            <Select
+              label="Type"
+              options={streamTypes}
+              bind:value={formData.streamType}
+            />
+            <span></span>
+
+            <span class="block text-on-surface mt-3 text-sm"
+              >Leave to auto if unsure.</span
+            >
+          </div>
         </div>
+        <!-- ./grid -->
 
-        <div></div>
-      {/if}
+        <div class="flex items-center">
+          <h3 class="text-base font-semibold text-on-body">HEADERS</h3>
+          <div class="flex-grow border-t border-outline-variant ml-3"></div>
+        </div>
+        <!-- ./flex -->
 
-      <div>
-        <TextFieldMultiline
-          autocomplete="off"
-          label="License Headers"
-          id="licenseHeaders"
-          placeholder=""
-          onfocus={handleHeadersPlaceholder}
-          onblur={handleHeadersPlaceholderBlur}
-          bind:value={formData.licenseHeaders}
-        />
-        <span class="block text-on-surface mt-2 text-sm"
-          >Headers for license request in key: value format</span
-        >
-      </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-3 fw-input">
+          <div>
+            <TextField
+              autocomplete="off"
+              label="Cookie"
+              id="cookie"
+              bind:value={formData.cookie}
+            />
+            <span class="block text-on-surface mt-2 text-sm"
+              >Value for the Cookie header</span
+            >
+          </div>
+          <!-- ./mb-3 -->
 
-      {#if formData.drmScheme === "com.widevine.alpha" || formData.drmScheme === "com.microsoft.playready"}
-        <div>
+          <div>
+            <TextField
+              autocomplete="off"
+              label="Origin"
+              id="origin"
+              bind:value={formData.origin}
+            />
+            <span class="block text-on-surface mt-2 text-sm"
+              >Value for the Origin header</span
+            >
+          </div>
+          <!-- ./mb-3 -->
+
+          <div>
+            <TextField
+              autocomplete="off"
+              label="Referer"
+              id="referer"
+              bind:value={formData.referer}
+            />
+            <span class="block text-on-surface mt-2 text-sm"
+              >Value for the Referer header</span
+            >
+          </div>
+          <!-- ./mb-3 -->
+
+          <div>
+            <TextField
+              autocomplete="off"
+              label="User-Agent (Optional)"
+              id="userAgent"
+              placeholder=""
+              bind:value={formData.userAgent}
+            />
+            <span class="block text-on-surface mt-2 text-sm"
+              >Optional override for the User-Agent header</span
+            >
+          </div>
+          <!-- ./mb-3 -->
+
+          <div class="col-span-1 md:col-span-2 mt-3">
+            <TextFieldMultiline
+              autocomplete="off"
+              label="Additional Headers"
+              id="requestHeaders"
+              placeholder=""
+              onfocus={handleHeadersPlaceholder}
+              onblur={handleHeadersPlaceholderBlur}
+              bind:value={formData.requestHeaders}
+            />
+            <span class="block text-on-surface mt-2 text-sm"
+              >Additional headers for the request in key: value format. One per
+              line.</span
+            >
+          </div>
+        </div>
+        <!-- /.grid -->
+
+        <div class="flex items-center">
+          <h3 class="text-base font-semibold text-on-body">DRM</h3>
+          <div class="flex-grow border-t border-outline-variant ml-3"></div>
+        </div>
+        <!-- ./flex -->
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-3 fw-input">
+          <div>
+            <Select
+              label="DRM Scheme"
+              id="drmScheme"
+              onchange={handleDrmSchemeChange}
+              options={drmSchemes}
+              bind:value={formData.drmScheme}
+            />
+            <span class="block text-on-surface mt-3 text-sm"
+              >Choose the DRM Scheme</span
+            >
+          </div>
+          <!-- ./mb-3 -->
+
+          {#if formData.drmScheme === "clearkey_inline"}
+            <div>
+              <TextField
+                autocomplete="off"
+                label="ClearKeyID:Key"
+                id="clearKey"
+                bind:value={formData.clearKey}
+              />
+              <span class="block text-on-surface mt-2 text-sm"
+                >Clearkey in kid:key format</span
+              >
+            </div>
+            <!-- ./mb-3 -->
+          {/if}
+
+          {#if !["none", "clearkey_inline"].includes(formData.drmScheme)}
+            <div>
+              <TextField
+                autocomplete="off"
+                label="License URL"
+                id="licenseUrl"
+                bind:value={formData.licenseUrl}
+              />
+              <span class="block text-on-surface mt-2 text-sm"
+                >The license server URL</span
+              >
+            </div>
+
+            {#if formData.drmScheme === "com.widevine.alpha" || formData.drmScheme === "com.microsoft.playready"}
+              <div>
+                <TextField
+                  autocomplete="off"
+                  label="Certificate URL"
+                  id="certificateUrl"
+                  bind:value={formData.certificateUrl}
+                />
+                <span class="block text-on-surface mt-2 text-sm"
+                  >The certificate URL</span
+                >
+              </div>
+
+              <div></div>
+            {/if}
+
+            <div>
+              <TextFieldMultiline
+                autocomplete="off"
+                label="License Headers"
+                id="licenseHeaders"
+                placeholder=""
+                onfocus={handleHeadersPlaceholder}
+                onblur={handleHeadersPlaceholderBlur}
+                bind:value={formData.licenseHeaders}
+              />
+              <span class="block text-on-surface mt-2 text-sm"
+                >Headers for license request in key: value format</span
+              >
+            </div>
+
+            {#if formData.drmScheme === "com.widevine.alpha" || formData.drmScheme === "com.microsoft.playready"}
+              <div>
+                <TextFieldMultiline
+                  autocomplete="off"
+                  label="Certificate Headers"
+                  id="certificateHeaders"
+                  placeholder=""
+                  onfocus={handleHeadersPlaceholder}
+                  onblur={handleHeadersPlaceholderBlur}
+                  bind:value={formData.certificateHeaders}
+                />
+                <span class="block text-on-surface mt-2 text-sm"
+                  >Headers for certificate request in key: value format</span
+                >
+              </div>
+            {/if}
+          {/if}
+        </div>
+        <!-- /.grid -->
+
+        <div class="flex items-center">
+          <h3 class="text-base font-semibold text-on-body">ADVANCED</h3>
+          <div class="flex-grow border-t border-outline-variant ml-3"></div>
+        </div>
+        <!-- ./flex -->
+
+        <div class="fw-input">
           <TextFieldMultiline
             autocomplete="off"
-            label="Certificate Headers"
-            id="certificateHeaders"
+            label="Shaka Player Config"
+            id="shakaConfig"
             placeholder=""
-            onfocus={handleHeadersPlaceholder}
-            onblur={handleHeadersPlaceholderBlur}
-            bind:value={formData.certificateHeaders}
+            oninput={validateField}
+            bind:value={formData.shakaConfig}
+            error={errors.shakaConfig}
           />
-          <span class="block text-on-surface mt-2 text-sm"
-            >Headers for certificate request in key: value format</span
+          <span
+            class={{
+              "text-error": errors.shakaConfig,
+
+              "text-on-surface": !errors.shakaConfig,
+              "mt-2 text-sm block": true,
+            }}
           >
+            {#if errors.shakaConfig}
+              {errors.shakaConfig}
+            {:else}
+              Additional Shaka player configuration as JSON/JSON5 object
+            {/if}
+          </span>
         </div>
-      {/if}
-    {/if}
-  </div>
-  <!-- /.grid -->
+      </div>
+    </div>
 
-  <div class="flex items-center my-6">
-    <h3 class="text-base font-semibold text-on-body">ADVANCED</h3>
-    <div class="flex-grow border-t border-outline-variant ml-3"></div>
-  </div>
-  <!-- ./flex -->
+    <aside class="space-y-6">
+      <div class="panel-card space-y-4">
+        <div class="flex items-center justify-between gap-3">
+          <div class="flex items-center gap-2">
+            <Icon icon={bookmarkIcon} size={1} />
+            <h3 class="text-base font-semibold text-on-body">Saved Streams</h3>
+          </div>
+          {#if savedStreams.length}
+            <span class="text-xs text-on-surface"
+              >{savedStreams.length} saved</span
+            >
+          {/if}
+        </div>
 
-  <div class="fw-input">
-    <TextFieldMultiline
-      autocomplete="off"
-      label="Shaka Player Config"
-      id="shakaConfig"
-      placeholder=""
-      oninput={validateField}
-      bind:value={formData.shakaConfig}
-      error={errors.shakaConfig}
-    />
-    <span
-      class={{
-        "text-error": errors.shakaConfig,
+        <div class="grid gap-3">
+          <TextField
+            autocomplete="off"
+            label="Save current stream as"
+            id="savedStreamName"
+            bind:value={savedStreamName}
+          />
+          <div class="flex flex-wrap gap-2">
+            <Button onclick={saveStream}>
+              <Icon icon={contentSaveIcon} size={0.9} />
+              <span class="ml-1">
+                {editingSavedId ? "Update saved stream" : "Save stream"}
+              </span>
+            </Button>
+            {#if editingSavedId}
+              <Button
+                onclick={() => {
+                  editingSavedId = null;
+                  savedStreamName = "";
+                }}
+                variant="outlined"
+              >
+                <Icon icon={closeIcon} size={0.9} />
+                <span class="ml-1">Cancel</span>
+              </Button>
+            {/if}
+          </div>
+        </div>
 
-        "text-on-surface": !errors.shakaConfig,
-        "mt-2 text-sm block": true,
-      }}
-    >
-      {#if errors.shakaConfig}
-        {errors.shakaConfig}
-      {:else}
-        Additional Shaka player configuration as JSON/JSON5 object
-      {/if}
-    </span>
+        {#if savedStreams.length}
+          <div class="space-y-3">
+            {#each savedStreams as item}
+              <div
+                class="rounded-xl border border-outline-variant bg-[rgb(var(--m3-scheme-surface-container-lowest))] p-3 space-y-3"
+              >
+                <div class="flex items-start justify-between gap-3">
+                  <div>
+                    <p class="text-sm font-semibold text-on-body">
+                      {item.name}
+                    </p>
+                    <p class="text-xs text-on-surface break-all">
+                      {item.stream.streamUrl}
+                    </p>
+                    <p class="text-xs text-on-surface mt-1">
+                      Updated {formatTimestamp(item.updatedAt ?? item.createdAt)}
+                    </p>
+                  </div>
+                  <Button
+                    iconType="full"
+                    title="Play saved stream"
+                    onclick={() => playStreamFromData(item.stream)}
+                  >
+                    <Icon icon={playCircleIcon} size={0.9} />
+                  </Button>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                  <Button
+                    variant="outlined"
+                    onclick={() => editSavedStream(item)}
+                  >
+                    <Icon icon={pencilIcon} size={0.8} />
+                    <span class="ml-1">Edit</span>
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    onclick={() => deleteSavedStream(item.id)}
+                  >
+                    <Icon icon={trashIcon} size={0.8} />
+                    <span class="ml-1">Delete</span>
+                  </Button>
+                </div>
+              </div>
+            {/each}
+          </div>
+        {:else}
+          <p class="text-sm text-on-surface">
+            Save stream setups you use often. They will appear here.
+          </p>
+        {/if}
+      </div>
+
+      <div class="panel-card space-y-4">
+        <div class="flex items-center justify-between gap-3">
+          <div class="flex items-center gap-2">
+            <Icon icon={historyIcon} size={1} />
+            <h3 class="text-base font-semibold text-on-body">Stream History</h3>
+          </div>
+          {#if streamHistory.length}
+            <Button variant="outlined" onclick={clearHistory}>
+              Clear
+            </Button>
+          {/if}
+        </div>
+
+        {#if streamHistory.length}
+          <div class="space-y-3">
+            {#each streamHistory as item}
+              <button
+                type="button"
+                class="w-full text-left rounded-xl border border-outline-variant bg-[rgb(var(--m3-scheme-surface-container-lowest))] p-3 transition hover:bg-[rgb(var(--m3-scheme-surface-container-low))]"
+                on:click={() => playStreamFromData(item.stream)}
+              >
+                <div class="flex items-start justify-between gap-3">
+                  <div>
+                    <p class="text-sm font-semibold text-on-body">
+                      {getStreamLabel(item.stream)}
+                    </p>
+                    <p class="text-xs text-on-surface break-all">
+                      {item.stream.streamUrl}
+                    </p>
+                    <p class="text-xs text-on-surface mt-1">
+                      Played {formatTimestamp(item.lastPlayed)}
+                    </p>
+                  </div>
+                  <Icon icon={playCircleIcon} size={1} />
+                </div>
+              </button>
+            {/each}
+          </div>
+        {:else}
+          <p class="text-sm text-on-surface">
+            Your recent streams will show up here for quick replay.
+          </p>
+        {/if}
+      </div>
+    </aside>
   </div>
 
   <FAB
