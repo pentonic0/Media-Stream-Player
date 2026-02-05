@@ -9,26 +9,20 @@
     TextFieldMultiline,
   } from "m3-svelte";
   import { onMount, tick } from "svelte";
-  import { openUrl } from "@tauri-apps/plugin-opener";
   import JSON5 from "json5";
   import playCircleIcon from "@iconify-icons/mdi/play-circle";
-  import aboutCircleIcon from "@iconify-icons/mdi/about-circle";
   import bookmarkIcon from "@iconify-icons/mdi/bookmark";
   import historyIcon from "@iconify-icons/mdi/history";
   import contentSaveIcon from "@iconify-icons/mdi/content-save";
   import pencilIcon from "@iconify-icons/mdi/pencil";
   import trashIcon from "@iconify-icons/mdi/trash-can-outline";
-  import webIcon from "@iconify-icons/mdi/web";
-  import facebookIcon from "@iconify-icons/mdi/facebook";
-  import githubIcon from "@iconify-icons/mdi/github";
   import closeIcon from "@iconify-icons/mdi/close";
   import refreshIcon from "@iconify-icons/mdi/refresh";
   import VideoPlayer from "$lib/components/VideoPlayer.svelte";
   import Dialog from "$lib/components/Dialog.svelte";
   import parseCurl from "parse-curl";
 
-  let isModalOpen,
-    isAboutOpen = false;
+  let isModalOpen;
 
   /**
    * @type {Snackbar}
@@ -504,41 +498,47 @@
     : document.body.classList.remove("modal-open");
 </script>
 
-<div class="app-container space-y-6">
-  <div class="panel-card flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+<div class="app-shell space-y-6">
+  <header class="panel-card app-header">
     <div>
-      <p class="text-xs uppercase tracking-widest text-on-surface">
+      <p class="text-xs uppercase tracking-[0.25em] text-on-surface">
         Stream workspace
       </p>
-      <h2 class="text-xl font-semibold text-on-body">Media Stream Player</h2>
+      <h2 class="text-2xl font-semibold text-on-body">Media Stream Player</h2>
       <p class="text-sm text-on-surface">
-        Configure your stream once, save presets, and jump back to recent
-        sessions instantly.
+        Build, save, and launch streams with a modern workspace built for quick
+        playback.
       </p>
     </div>
-    <div class="flex flex-wrap gap-3">
-      <div
-        class="rounded-xl border border-outline-variant bg-[rgb(var(--m3-scheme-surface-container-low))] px-4 py-2"
-      >
+    <div class="flex flex-wrap gap-3 items-center">
+      <div class="stat-chip">
         <p class="text-xs text-on-surface">Saved</p>
         <p class="text-base font-semibold text-on-body">
           {savedStreams.length}
         </p>
       </div>
-      <div
-        class="rounded-xl border border-outline-variant bg-[rgb(var(--m3-scheme-surface-container-low))] px-4 py-2"
-      >
+      <div class="stat-chip">
         <p class="text-xs text-on-surface">History</p>
         <p class="text-base font-semibold text-on-body">
           {streamHistory.length}
         </p>
       </div>
+      <div class="flex flex-wrap gap-2">
+        <Button variant="outlined" onclick={resetFormData}>
+          <Icon icon={refreshIcon} size={0.9} />
+          <span class="ml-1">Reset</span>
+        </Button>
+        <Button onclick={handleSubmit}>
+          <Icon icon={playCircleIcon} size={0.9} />
+          <span class="ml-1">Play stream</span>
+        </Button>
+      </div>
     </div>
-  </div>
+  </header>
 
-  <div class="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+  <div class="grid gap-6 xl:grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)]">
     <div class="space-y-6">
-      <div class="panel-card space-y-6">
+      <div class="panel-card panel-card--elevated space-y-6">
         <div class="grid grid-cols-12 gap-3 fw-input">
           <div class="md:col-span-8 col-span-7">
             <TextField
@@ -591,9 +591,9 @@
         </div>
         <!-- ./grid -->
 
-        <div class="flex items-center">
-          <h3 class="text-base font-semibold text-on-body">HEADERS</h3>
-          <div class="flex-grow border-t border-outline-variant ml-3"></div>
+        <div class="section-title">
+          <h3 class="text-base font-semibold text-on-body">Headers</h3>
+          <div class="section-divider"></div>
         </div>
         <!-- ./flex -->
 
@@ -669,9 +669,9 @@
         </div>
         <!-- /.grid -->
 
-        <div class="flex items-center">
+        <div class="section-title">
           <h3 class="text-base font-semibold text-on-body">DRM</h3>
-          <div class="flex-grow border-t border-outline-variant ml-3"></div>
+          <div class="section-divider"></div>
         </div>
         <!-- ./flex -->
 
@@ -769,9 +769,9 @@
         </div>
         <!-- /.grid -->
 
-        <div class="flex items-center">
-          <h3 class="text-base font-semibold text-on-body">ADVANCED</h3>
-          <div class="flex-grow border-t border-outline-variant ml-3"></div>
+        <div class="section-title">
+          <h3 class="text-base font-semibold text-on-body">Advanced</h3>
+          <div class="section-divider"></div>
         </div>
         <!-- ./flex -->
 
@@ -804,7 +804,7 @@
     </div>
 
     <aside class="space-y-6">
-      <div class="panel-card space-y-4">
+      <div class="panel-card panel-card--glass space-y-4">
         <div class="flex items-center justify-between gap-3">
           <div class="flex items-center gap-2">
             <Icon icon={bookmarkIcon} size={1} />
@@ -849,9 +849,7 @@
         {#if savedStreams.length}
           <div class="space-y-3">
             {#each savedStreams as item}
-              <div
-                class="rounded-xl border border-outline-variant bg-[rgb(var(--m3-scheme-surface-container-lowest))] p-3 space-y-3"
-              >
+              <div class="saved-item">
                 <div class="flex items-start justify-between gap-3">
                   <div>
                     <p class="text-sm font-semibold text-on-body">
@@ -898,7 +896,7 @@
         {/if}
       </div>
 
-      <div class="panel-card space-y-4">
+      <div class="panel-card panel-card--glass space-y-4">
         <div class="flex items-center justify-between gap-3">
           <div class="flex items-center gap-2">
             <Icon icon={historyIcon} size={1} />
@@ -916,7 +914,7 @@
             {#each streamHistory as item}
               <button
                 type="button"
-                class="w-full text-left rounded-xl border border-outline-variant bg-[rgb(var(--m3-scheme-surface-container-lowest))] p-3 transition hover:bg-[rgb(var(--m3-scheme-surface-container-low))]"
+                class="history-item"
                 on:click={() => playStreamFromData(item.stream)}
               >
                 <div class="flex items-start justify-between gap-3">
@@ -946,28 +944,8 @@
   </div>
 
   <FAB
-    title="Reset Form"
-    style="position: fixed; bottom: 5%; left: 20px;z-index:10;"
-    color="tertiary"
-    elevation="normal"
-    onclick={resetFormData}
-    icon={refreshIcon}
-  />
-
-  <FAB
-    title="About"
-    style="position: fixed; bottom: 5%; left: 80px;z-index:10;"
-    color="secondary"
-    elevation="normal"
-    onclick={() => {
-      isAboutOpen = true;
-    }}
-    icon={aboutCircleIcon}
-  />
-
-  <FAB
     title="Play Stream"
-    style="position: fixed; bottom: 5%; right: 20px;z-index:10;"
+    style="position: fixed; bottom: 4%; right: 28px;z-index:10;"
     color="primary"
     elevation="normal"
     onclick={handleSubmit}
@@ -1002,61 +980,6 @@
       {/if}
     {/snippet}
     {#snippet buttons()}{/snippet}
-  </Dialog>
-</div>
-
-<div class="about-modal">
-  <Dialog headline="Media Stream Player" bind:open={isAboutOpen} icon={false}>
-    {#snippet children()}
-      <p class="mb-3">
-        &copy; {new Date().getFullYear()}. All rights reserved.
-      </p>
-      <!-- /.mb-3 -->
-
-      <p class="mb-4">Made with 💗 by Miraz Mac.</p>
-
-      <p>
-        <strong>Media Stream Player</strong> does not host media. Users are responsible
-        for the content they access and must ensure streams and DRM licenses comply
-        with the law.
-      </p>
-    {/snippet}
-    {#snippet buttons()}
-      <Button
-        iconType="full"
-        onclick={async (e) => {
-          e.preventDefault();
-          await openUrl("https://mirazmac.com");
-        }}
-        title="Website"
-      >
-        <Icon icon={webIcon} size={0.9} />
-      </Button>
-
-      <Button
-        iconType="full"
-        style="background:#3b5998"
-        onclick={async (e) => {
-          e.preventDefault();
-          await openUrl("https://fb.com/mirazmac");
-        }}
-        title="Facebook"
-      >
-        <Icon icon={facebookIcon} size={0.9} />
-      </Button>
-
-      <Button
-        iconType="full"
-        style="background:#111"
-        onclick={async (e) => {
-          e.preventDefault();
-          await openUrl("https://github.com/MirazMac");
-        }}
-        title="GitHub"
-      >
-        <Icon icon={githubIcon} size={0.9} />
-      </Button>
-    {/snippet}
   </Dialog>
 </div>
 
