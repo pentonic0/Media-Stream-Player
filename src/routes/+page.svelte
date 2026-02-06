@@ -12,12 +12,11 @@
   import JSON5 from "json5";
   import playCircleIcon from "@iconify-icons/mdi/play-circle";
   import bookmarkIcon from "@iconify-icons/mdi/bookmark";
-  import historyIcon from "@iconify-icons/mdi/history";
   import contentSaveIcon from "@iconify-icons/mdi/content-save";
-  import pencilIcon from "@iconify-icons/mdi/pencil";
-  import trashIcon from "@iconify-icons/mdi/trash-can-outline";
   import closeIcon from "@iconify-icons/mdi/close";
   import refreshIcon from "@iconify-icons/mdi/refresh";
+  import libraryIcon from "@iconify-icons/mdi/library-shelves";
+  import infoIcon from "@iconify-icons/mdi/information-outline";
   import VideoPlayer from "$lib/components/VideoPlayer.svelte";
   import Dialog from "$lib/components/Dialog.svelte";
   import parseCurl from "parse-curl";
@@ -69,7 +68,6 @@
   let streamHistory = [];
   let savedStreams = [];
   let savedStreamName = "";
-  let editingSavedId = null;
 
   const STORAGE_KEYS = {
     history: "msp_stream_history",
@@ -184,15 +182,6 @@
     applyStreamToForm(stream);
     updateHistory(stream);
     isModalOpen = true;
-  };
-
-  const getStreamLabel = (stream) => {
-    try {
-      const url = new URL(stream.streamUrl);
-      return url.hostname || stream.streamUrl;
-    } catch (error) {
-      return stream.streamUrl || "Unknown stream";
-    }
   };
 
   const formatTimestamp = (value) => {
@@ -447,50 +436,18 @@
     }
 
     const payload = getStreamPayload(formData);
-    if (editingSavedId) {
-      updateSavedStreams(
-        savedStreams.map((item) =>
-          item.id === editingSavedId
-            ? {
-                ...item,
-                name,
-                updatedAt: new Date().toISOString(),
-                stream: payload,
-              }
-            : item
-        )
-      );
-      snackbar?.show({ message: "Saved stream updated." });
-    } else {
-      updateSavedStreams([
-        {
-          id: createId(),
-          name,
-          createdAt: new Date().toISOString(),
-          stream: payload,
-        },
-        ...savedStreams,
-      ]);
-      snackbar?.show({ message: "Stream saved for later." });
-    }
+    updateSavedStreams([
+      {
+        id: createId(),
+        name,
+        createdAt: new Date().toISOString(),
+        stream: payload,
+      },
+      ...savedStreams,
+    ]);
+    snackbar?.show({ message: "Stream saved for later." });
 
     savedStreamName = "";
-    editingSavedId = null;
-  };
-
-  const editSavedStream = (item) => {
-    editingSavedId = item.id;
-    savedStreamName = item.name;
-    applyStreamToForm(item.stream);
-  };
-
-  const deleteSavedStream = (itemId) => {
-    updateSavedStreams(savedStreams.filter((item) => item.id !== itemId));
-  };
-
-  const clearHistory = () => {
-    streamHistory = [];
-    persistList(STORAGE_KEYS.history, streamHistory);
   };
 
   $: isModalOpen
@@ -498,30 +455,38 @@
     : document.body.classList.remove("modal-open");
 </script>
 
-<div class="app-shell space-y-6">
-  <header class="panel-card app-header">
-    <div>
-      <p class="text-xs uppercase tracking-[0.25em] text-on-surface">
-        Stream workspace
-      </p>
-      <h2 class="text-2xl font-semibold text-on-body">Media Stream Player</h2>
-      <p class="text-sm text-on-surface">
-        Build, save, and launch streams with a modern workspace built for quick
-        playback.
-      </p>
-    </div>
-    <div class="flex flex-wrap gap-3 items-center">
-      <div class="stat-chip">
-        <p class="text-xs text-on-surface">Saved</p>
-        <p class="text-base font-semibold text-on-body">
-          {savedStreams.length}
+<div class="app-shell space-y-8">
+  <header class="panel-card app-hero">
+    <div class="flex flex-wrap items-start justify-between gap-6">
+      <div class="space-y-3">
+        <p class="text-xs uppercase tracking-[0.25em] text-on-surface">
+          Stream workspace
         </p>
-      </div>
-      <div class="stat-chip">
-        <p class="text-xs text-on-surface">History</p>
-        <p class="text-base font-semibold text-on-body">
-          {streamHistory.length}
+        <h2 class="text-3xl font-semibold text-on-body">
+          Media Stream Player
+        </h2>
+        <p class="text-sm text-on-surface max-w-xl">
+          Build, save, and launch streams with a polished workflow for quick
+          playback and modern stream control.
         </p>
+        <div class="flex flex-wrap gap-3 items-center">
+          <div class="stat-chip">
+            <p class="text-xs text-on-surface">Saved</p>
+            <p class="text-base font-semibold text-on-body">
+              {savedStreams.length}
+            </p>
+          </div>
+          <div class="stat-chip">
+            <p class="text-xs text-on-surface">History</p>
+            <p class="text-base font-semibold text-on-body">
+              {streamHistory.length}
+            </p>
+          </div>
+          <a class="nav-pill" href="/library">
+            <Icon icon={libraryIcon} size={0.9} />
+            <span>Library</span>
+          </a>
+        </div>
       </div>
       <div class="flex flex-wrap gap-2">
         <Button variant="outlined" onclick={resetFormData}>
@@ -536,7 +501,7 @@
     </div>
   </header>
 
-  <div class="grid gap-6 xl:grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)]">
+  <div class="grid gap-6 xl:grid-cols-[minmax(0,2.1fr)_minmax(0,1fr)]">
     <div class="space-y-6">
       <div class="panel-card panel-card--elevated space-y-6">
         <div class="grid grid-cols-12 gap-3 fw-input">
@@ -807,14 +772,12 @@
       <div class="panel-card panel-card--glass space-y-4">
         <div class="flex items-center justify-between gap-3">
           <div class="flex items-center gap-2">
-            <Icon icon={bookmarkIcon} size={1} />
-            <h3 class="text-base font-semibold text-on-body">Saved Streams</h3>
+            <Icon icon={contentSaveIcon} size={1} />
+            <h3 class="text-base font-semibold text-on-body">
+              Quick save
+            </h3>
           </div>
-          {#if savedStreams.length}
-            <span class="text-xs text-on-surface"
-              >{savedStreams.length} saved</span
-            >
-          {/if}
+          <span class="text-xs text-on-surface">Save for later</span>
         </div>
 
         <div class="grid gap-3">
@@ -827,28 +790,32 @@
           <div class="flex flex-wrap gap-2">
             <Button onclick={saveStream}>
               <Icon icon={contentSaveIcon} size={0.9} />
-              <span class="ml-1">
-                {editingSavedId ? "Update saved stream" : "Save stream"}
-              </span>
+              <span class="ml-1">Save stream</span>
             </Button>
-            {#if editingSavedId}
-              <Button
-                onclick={() => {
-                  editingSavedId = null;
-                  savedStreamName = "";
-                }}
-                variant="outlined"
-              >
-                <Icon icon={closeIcon} size={0.9} />
-                <span class="ml-1">Cancel</span>
-              </Button>
-            {/if}
+            <a class="nav-pill nav-pill--ghost" href="/library">
+              <Icon icon={libraryIcon} size={0.9} />
+              <span>Manage library</span>
+            </a>
           </div>
+        </div>
+      </div>
+
+      <div class="panel-card panel-card--glass space-y-4">
+        <div class="flex items-center justify-between gap-3">
+          <div class="flex items-center gap-2">
+            <Icon icon={bookmarkIcon} size={1} />
+            <h3 class="text-base font-semibold text-on-body">Saved Streams</h3>
+          </div>
+          {#if savedStreams.length}
+            <span class="text-xs text-on-surface"
+              >{savedStreams.length} saved</span
+            >
+          {/if}
         </div>
 
         {#if savedStreams.length}
           <div class="space-y-3">
-            {#each savedStreams as item}
+            {#each savedStreams.slice(0, 4) as item}
               <div class="saved-item">
                 <div class="flex items-start justify-between gap-3">
                   <div>
@@ -862,81 +829,34 @@
                       Updated {formatTimestamp(item.updatedAt ?? item.createdAt)}
                     </p>
                   </div>
-                  <Button
-                    iconType="full"
-                    title="Play saved stream"
-                    onclick={() => playStreamFromData(item.stream)}
-                  >
-                    <Icon icon={playCircleIcon} size={0.9} />
-                  </Button>
-                </div>
-                <div class="flex flex-wrap gap-2">
-                  <Button
-                    variant="outlined"
-                    onclick={() => editSavedStream(item)}
-                  >
-                    <Icon icon={pencilIcon} size={0.8} />
-                    <span class="ml-1">Edit</span>
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    onclick={() => deleteSavedStream(item.id)}
-                  >
-                    <Icon icon={trashIcon} size={0.8} />
-                    <span class="ml-1">Delete</span>
-                  </Button>
+                  <div class="flex flex-col gap-2">
+                    <Button
+                      iconType="full"
+                      title="Play saved stream"
+                      onclick={() => playStreamFromData(item.stream)}
+                    >
+                      <Icon icon={playCircleIcon} size={0.9} />
+                    </Button>
+                    <a
+                      class="icon-button"
+                      href={`/saved/${item.id}`}
+                      title="View saved stream details"
+                    >
+                      <Icon icon={infoIcon} size={0.9} />
+                    </a>
+                  </div>
                 </div>
               </div>
             {/each}
           </div>
+          {#if savedStreams.length > 4}
+            <a class="nav-pill nav-pill--ghost w-full justify-center" href="/library">
+              View all saved streams
+            </a>
+          {/if}
         {:else}
           <p class="text-sm text-on-surface">
             Save stream setups you use often. They will appear here.
-          </p>
-        {/if}
-      </div>
-
-      <div class="panel-card panel-card--glass space-y-4">
-        <div class="flex items-center justify-between gap-3">
-          <div class="flex items-center gap-2">
-            <Icon icon={historyIcon} size={1} />
-            <h3 class="text-base font-semibold text-on-body">Stream History</h3>
-          </div>
-          {#if streamHistory.length}
-            <Button variant="outlined" onclick={clearHistory}>
-              Clear
-            </Button>
-          {/if}
-        </div>
-
-        {#if streamHistory.length}
-          <div class="space-y-3">
-            {#each streamHistory as item}
-              <button
-                type="button"
-                class="history-item"
-                on:click={() => playStreamFromData(item.stream)}
-              >
-                <div class="flex items-start justify-between gap-3">
-                  <div>
-                    <p class="text-sm font-semibold text-on-body">
-                      {getStreamLabel(item.stream)}
-                    </p>
-                    <p class="text-xs text-on-surface break-all">
-                      {item.stream.streamUrl}
-                    </p>
-                    <p class="text-xs text-on-surface mt-1">
-                      Played {formatTimestamp(item.lastPlayed)}
-                    </p>
-                  </div>
-                  <Icon icon={playCircleIcon} size={1} />
-                </div>
-              </button>
-            {/each}
-          </div>
-        {:else}
-          <p class="text-sm text-on-surface">
-            Your recent streams will show up here for quick replay.
           </p>
         {/if}
       </div>

@@ -239,8 +239,44 @@ html {
   );
 }
 
+.app-hero {
+  background: linear-gradient(
+      140deg,
+      rgba(var(--m3-scheme-primary) / 0.15),
+      transparent 55%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(var(--m3-scheme-surface-container-high) / 0.95),
+      rgba(var(--m3-scheme-surface-container-low))
+    );
+  border: 1px solid rgba(var(--m3-scheme-outline-variant));
+}
+
 .stat-chip {
   @apply rounded-xl border border-[rgb(var(--m3-scheme-outline-variant))] bg-[rgb(var(--m3-scheme-surface-container-low))] px-4 py-2 shadow-inner;
+}
+
+.nav-pill {
+  @apply inline-flex items-center gap-2 rounded-full border border-[rgb(var(--m3-scheme-outline-variant))] bg-[rgb(var(--m3-scheme-surface-container-low))] px-4 py-2 text-sm text-[rgb(var(--m3-scheme-on-surface))] transition;
+}
+
+.nav-pill:hover {
+  border-color: rgba(var(--m3-scheme-primary) / 0.5);
+  transform: translateY(-1px);
+}
+
+.nav-pill--ghost {
+  @apply bg-transparent;
+}
+
+.icon-button {
+  @apply inline-flex h-9 w-9 items-center justify-center rounded-full border border-[rgb(var(--m3-scheme-outline-variant))] bg-[rgb(var(--m3-scheme-surface-container-lowest))] transition;
+}
+
+.icon-button:hover {
+  border-color: rgba(var(--m3-scheme-primary) / 0.5);
+  background: rgba(var(--m3-scheme-surface-container-low) / 0.9);
 }
 
 .section-title {
@@ -271,6 +307,30 @@ html {
   background: rgba(var(--m3-scheme-surface-container-low) / 0.9);
   border-color: rgba(var(--m3-scheme-primary) / 0.4);
   transform: translateY(-1px);
+}
+
+.info-grid {
+  @apply grid gap-3 sm:grid-cols-2;
+}
+
+.info-item {
+  @apply rounded-2xl border border-[rgb(var(--m3-scheme-outline-variant))] bg-[rgb(var(--m3-scheme-surface-container-lowest))] p-3;
+}
+
+.info-label {
+  @apply text-xs uppercase tracking-[0.15em] text-[rgb(var(--m3-scheme-on-surface-variant))];
+}
+
+.info-value {
+  @apply mt-2 text-sm text-[rgb(var(--m3-scheme-on-surface))];
+}
+
+.info-block {
+  @apply rounded-2xl border border-[rgb(var(--m3-scheme-outline-variant))] bg-[rgb(var(--m3-scheme-surface-container-lowest))] p-3;
+}
+
+.info-block pre {
+  @apply mt-2 whitespace-pre-wrap text-sm text-[rgb(var(--m3-scheme-on-surface))];
 }
 
 /* Backgrounds */
