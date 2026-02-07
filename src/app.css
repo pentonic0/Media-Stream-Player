@@ -1,8 +1,5 @@
 @import "tailwindcss";
 
-@import "m3-svelte/misc/styles.css";
-@import "m3-svelte/misc/recommended-styles.css";
-
 @import "shaka-player/dist/controls.css";
 
 /* dm-sans-regular - latin */
@@ -47,29 +44,28 @@
 
 :root,
 ::backdrop {
-  /* Premium Dark Palette */
-  --m3-scheme-background: 8 10 12;
-  --m3-scheme-on-background: 240 242 245;
+  /* Premium Dark Palette - Slate/Zinc based */
+  --m3-scheme-background: 6 7 9;
+  --m3-scheme-on-background: 248 250 252;
 
-  --m3-scheme-surface: 13 15 18;
-  --m3-scheme-surface-dim: 10 12 14;
-  --m3-scheme-surface-bright: 32 35 40;
+  --m3-scheme-surface: 10 12 16;
+  --m3-scheme-surface-dim: 8 9 12;
+  --m3-scheme-surface-bright: 24 28 34;
 
-  --m3-scheme-surface-container-lowest: 6 8 10;
-  --m3-scheme-surface-container-low: 18 21 25;
-  --m3-scheme-surface-container: 24 28 34;
-  --m3-scheme-surface-container-high: 32 38 46;
-  --m3-scheme-surface-container-highest: 44 50 60;
+  --m3-scheme-surface-container-lowest: 4 5 7;
+  --m3-scheme-surface-container-low: 15 17 22;
+  --m3-scheme-surface-container: 20 23 28;
+  --m3-scheme-surface-container-high: 30 35 42;
+  --m3-scheme-surface-container-highest: 45 52 62;
 
-  --m3-scheme-on-surface: 240 244 248;
-  --m3-scheme-on-surface-variant: 160 170 180;
-  --m3-scheme-outline: 80 90 105;
-  --m3-scheme-outline-variant: 45 52 64;
+  --m3-scheme-on-surface: 248 250 252;
+  --m3-scheme-on-surface-variant: 148 163 184;
+  --m3-scheme-outline: 71 85 105;
+  --m3-scheme-outline-variant: 30 41 59;
 
   --m3-scheme-primary: 99 102 241; /* Indigo 500 */
   --m3-scheme-on-primary: 255 255 255;
   --m3-scheme-primary-container: 67 56 202; /* Indigo 700 */
-  --m3-scheme-on-primary-container: 238 242 255;
 
   --m3-scheme-secondary: 14 165 233; /* Sky 500 */
   --m3-scheme-on-secondary: 255 255 255;
@@ -82,55 +78,42 @@
   --m3-scheme-error: 239 68 68;
   --m3-scheme-on-error: 255 255 255;
 
-  --m3-scheme-scrim: 0 0 0;
-  --m3-scheme-shadow: 0 0 0;
-
   --m3-font: "DM Sans", system-ui, sans-serif;
-  --m3-font-body: "DM Sans", system-ui, sans-serif;
-  --app-radius: 1.5rem;
-  --sidebar-width: 260px;
-  --navbar-height: 48px;
+  --app-radius: 1.75rem;
+  --sidebar-width: 240px;
+  --navbar-height: 52px;
 }
 
 @theme {
   --default-font-family: "DM Sans", system-ui, sans-serif;
-  --text-sm: 0.85rem;
+  --text-sm: 0.875rem;
   --text-base: 1rem;
   --color-primary: rgb(var(--m3-scheme-primary));
+  --color-secondary: rgb(var(--m3-scheme-secondary));
   --color-surface: rgb(var(--m3-scheme-surface));
+  --color-surface-container: rgb(var(--m3-scheme-surface-container));
+  --color-on-surface: rgb(var(--m3-scheme-on-surface));
+  --color-on-surface-variant: rgb(var(--m3-scheme-on-surface-variant));
   --color-outline: rgb(var(--m3-scheme-outline-variant));
   --radius-xl: 1.5rem;
   --radius-2xl: 2rem;
+  --radius-3xl: 2.5rem;
 }
 
 @utility glass-panel {
   background: rgba(var(--m3-scheme-surface-container) / 0.4);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
 }
 
 @utility glass-card {
-  background: rgba(var(--m3-scheme-surface-container-low) / 0.6);
-  backdrop-filter: blur(12px);
+  background: rgba(var(--m3-scheme-surface-container-low) / 0.5);
+  backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: var(--app-radius);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-@utility gradient-text {
-  background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.7) 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-@utility primary-gradient-text {
-  background: linear-gradient(135deg, rgb(var(--m3-scheme-primary)) 0%, rgb(var(--m3-scheme-secondary)) 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 html, body {
@@ -145,21 +128,20 @@ html, body {
 
 body {
   background:
-    radial-gradient(circle at 0% 0%, rgba(var(--m3-scheme-primary) / 0.15), transparent 40%),
-    radial-gradient(circle at 100% 0%, rgba(var(--m3-scheme-secondary) / 0.1), transparent 40%),
-    radial-gradient(circle at 50% 100%, rgba(var(--m3-scheme-tertiary) / 0.05), transparent 40%),
+    radial-gradient(circle at 0% 0%, rgba(var(--m3-scheme-primary) / 0.1), transparent 45%),
+    radial-gradient(circle at 100% 0%, rgba(var(--m3-scheme-secondary) / 0.08), transparent 45%),
+    radial-gradient(circle at 50% 100%, rgba(var(--m3-scheme-tertiary) / 0.05), transparent 45%),
     rgb(var(--m3-scheme-background));
-  transition: background 0.5s ease;
 }
 
 /* Scrollbar Styling */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(var(--m3-scheme-outline) / 0.3) transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
 }
 
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -167,24 +149,19 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(var(--m3-scheme-outline) / 0.3);
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(var(--m3-scheme-outline) / 0.5);
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .glass-card:hover {
-  background: rgba(var(--m3-scheme-surface-container) / 0.7);
-  border-color: rgba(var(--m3-scheme-primary) / 0.3);
-  transform: translateY(-2px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
-}
-
-/* Modern Typography */
-h1, h2, h3, h4 {
-  letter-spacing: -0.02em;
+  background: rgba(var(--m3-scheme-surface-container) / 0.65);
+  border-color: rgba(var(--m3-scheme-primary) / 0.2);
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
 }
 
 /* App Layout Structure */
@@ -205,71 +182,33 @@ h1, h2, h3, h4 {
 #scroll-area {
   flex: 1;
   overflow-y: auto;
-  padding: 2rem;
-  padding-bottom: 6rem;
-}
-
-/* Legacy Support & M3 Overrides */
-.appbar {
-  background: rgba(var(--m3-scheme-surface-container-lowest) / 0.8);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(var(--m3-scheme-outline-variant) / 0.5);
-  height: var(--navbar-height);
-  z-index: 100;
-}
-
-.m3-text-field .m3-container, .m3-select .m3-container {
-  border-radius: 12px !important;
-}
-
-.panel-card {
-  @apply glass-card p-6;
-}
-
-.hero-title {
-  @apply text-4xl font-extrabold primary-gradient-text mb-2;
-}
-
-.hero-badge {
-  @apply inline-flex items-center rounded-full px-3 py-1 text-xs font-medium uppercase tracking-wider;
-  background: rgba(var(--m3-scheme-primary) / 0.15);
-  color: rgb(var(--m3-scheme-primary));
-  border: 1px solid rgba(var(--m3-scheme-primary) / 0.2);
-}
-
-.stat-chip {
-  @apply glass-panel rounded-2xl px-4 py-2;
-}
-
-.nav-pill {
-  @apply flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all;
-  background: rgba(var(--m3-scheme-surface-container-high) / 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.nav-pill:hover {
-  background: rgba(var(--m3-scheme-primary) / 0.1);
-  border-color: rgba(var(--m3-scheme-primary) / 0.3);
+  padding: 2.5rem;
+  padding-bottom: 8rem;
 }
 
 /* Animations */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.5s ease-out forwards;
+  animation: fadeIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 /* Video Player Overrides */
 .youtube-theme.shaka-video-container {
-  border-radius: 1rem;
+  border-radius: 1.5rem;
   overflow: hidden;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+  box-shadow: 0 40px 80px rgba(0,0,0,0.7);
+  border: 1px solid rgba(255,255,255,0.05);
 }
 
-.shaka-snack.holder .m3-container {
-  @apply glass-panel rounded-2xl;
-  background-color: rgba(var(--m3-scheme-surface-container) / 0.8);
+.shaka-snack.holder {
+  @apply fixed bottom-8 left-1/2 -translate-x-1/2 z-[2000];
+}
+
+/* Modal Open Helper */
+body.modal-open {
+  overflow: hidden;
 }

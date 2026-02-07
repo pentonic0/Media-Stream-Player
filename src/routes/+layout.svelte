@@ -2,6 +2,7 @@
   import "../app.css";
   import AppBar from "$lib/components/AppBar.svelte";
   import Sidebar from "$lib/components/Sidebar.svelte";
+  import ToastContainer from "$lib/components/ToastContainer.svelte";
   import { onMount, onDestroy } from "svelte";
   import { invoke } from "@tauri-apps/api/core";
   import { getCurrentWindow } from "@tauri-apps/api/window";
@@ -81,6 +82,7 @@
       <slot />
     </div>
   </main>
+  <ToastContainer />
 </div>
 
 <div class="modal-backdrop"></div>
