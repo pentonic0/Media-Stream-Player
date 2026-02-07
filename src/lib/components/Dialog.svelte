@@ -1,6 +1,18 @@
 <script>
   import { Icon } from "m3-svelte";
 
+  /** @type {{
+    icon?: any,
+    headline?: string,
+    buttons?: any,
+    children: any,
+    open: boolean,
+    closedby?: "none" | "any" | "closerequest",
+    closeOnEsc?: boolean,
+    onEsc?: Function,
+    closeOnClick?: boolean,
+    onClick?: Function
+  }} */
   let {
     icon,
     headline,
@@ -25,7 +37,7 @@
 </script>
 
 <dialog
-  class="m3-container"
+  class="m3-container glass-panel"
   ontoggle={(e) => {
     open = e.newState == "open";
   }}
@@ -42,65 +54,67 @@
     }
   }}
   bind:this={dialog}
-  closedby={closedby ||
-    (extra.closeOnClick == false && extra.closeOnEsc == false
-      ? "none"
-      : extra.closeOnClick == false
-        ? "closerequest"
-        : "any")}
+  closedby={closedby}
   role="alertdialog"
   {...extra}
 >
   {#if icon}
     <Icon {icon} size={24} />
   {/if}
-  <p class="headline m3-font-headline-small" class:center={icon}>{headline}</p>
+  {#if headline}
+    <p class="headline m3-font-headline-small" class:center={icon}>{headline}</p>
+  {/if}
   <div class="content m3-font-body-medium">
     {@render children()}
   </div>
-  <form method="dialog" class="buttons">
-    {@render buttons()}
-  </form>
+  {#if buttons}
+    <form method="dialog" class="buttons">
+      {@render buttons()}
+    </form>
+  {/if}
 </dialog>
 
 <style>
   :root {
-    --m3-dialog-shape: var(--m3-util-rounding-extra-large);
+    --m3-dialog-shape: 2rem;
   }
   dialog {
     display: flex;
     flex-direction: column;
-    background-color: rgb(var(--m3-scheme-surface-container-high));
-    --m3-util-background: rgb(var(--m3-scheme-surface-container-high));
-    border: none;
+    background: rgba(var(--m3-scheme-surface-container-high) / 0.8) !important;
+    backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
     border-radius: var(--m3-dialog-shape);
     min-width: 17.5rem;
-    max-width: 35rem;
-    padding: 1.5rem;
-    overflow: auto;
+    max-width: 90vw;
+    padding: 0;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
     > :global(svg) {
       color: rgb(var(--m3-scheme-secondary));
       flex-shrink: 0;
       align-self: center;
-      margin-bottom: 1rem;
+      margin: 1.5rem 1.5rem 0;
     }
   }
   .headline {
     color: rgb(var(--m3-scheme-on-surface));
-    margin-top: 0;
-    margin-bottom: 1rem;
+    margin: 1.5rem 1.5rem 1rem;
+    font-weight: 800;
+    letter-spacing: -0.025em;
   }
   .headline.center {
     text-align: center;
   }
   .content {
     color: rgb(var(--m3-scheme-on-surface-variant));
-    margin-bottom: 1.5rem;
+    flex: 1;
   }
   .buttons {
     display: flex;
     justify-content: flex-end;
     gap: 0.5rem;
+    padding: 1rem 1.5rem 1.5rem;
   }
 
   dialog {
@@ -110,59 +124,22 @@
     visibility: hidden;
     pointer-events: none;
     transition:
-      opacity var(--m3-util-easing-fast),
-      visibility var(--m3-util-easing-fast);
+      opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+      visibility 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+      transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transform: scale(0.9) translateY(20px);
   }
   dialog[open] {
     opacity: 1;
     visibility: visible;
     pointer-events: auto;
-    animation:
-      dialogIn var(--m3-util-curve-decel) 500ms,
-      opacity var(--m3-util-curve-decel) 100ms backwards;
+    transform: scale(1) translateY(0);
   }
-  dialog[open] .headline {
-    animation: opacity var(--m3-util-easing-fast);
-  }
-  dialog[open] .content {
-    animation: opacity var(--m3-util-easing-fast) 50ms backwards;
-  }
-  dialog[open] .buttons {
-    animation:
-      buttonsIn var(--m3-util-curve-decel) 500ms,
-      opacity var(--m3-util-easing-fast) 100ms backwards;
-  }
+
   dialog::backdrop {
-    background-color: rgb(var(--m3-scheme-scrim) / 0.3);
-    animation: opacity var(--m3-util-curve-decel) 500ms;
-  }
-  @keyframes dialogIn {
-    0% {
-      transform: translateY(-3rem) scaleY(90%);
-      clip-path: inset(0 0 100% 0 round var(--m3-dialog-shape));
-    }
-    100% {
-      transform: translateY(0) scaleY(100%);
-      clip-path: inset(0 0 0 0 round var(--m3-dialog-shape));
-    }
-  }
-  @keyframes buttonsIn {
-    0% {
-      position: relative;
-      bottom: 100%;
-    }
-    100% {
-      position: relative;
-      bottom: 0;
-    }
-  }
-  @keyframes opacity {
-    0% {
-      opacity: 0;
-    }
-    100% {
-      opacity: 1;
-    }
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    transition: opacity 0.3s ease;
   }
 
   @media print, (forced-colors: active) {
