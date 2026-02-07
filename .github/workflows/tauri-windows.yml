@@ -3,7 +3,7 @@ name: Tauri Build (Windows)
 # কখন চালানো হবে
 on:
   push:
-    branches: [ google ]       # main branch এ push হলে
+    branches: [ googlen ]       # main branch এ push হলে
   workflow_dispatch:          # manual trigger
 
 jobs:
