@@ -7,7 +7,6 @@
   import JSON5 from "json5";
   import { TauriFetchLoader } from "$lib/TauriFetchLoader.js";
   import { SkipToLiveButtonFactory } from "$lib/ShakaLiveButton.js";
-  import data from "@iconify-icons/mdi/play-circle";
 
   // Register the button with Shaka UI
   shaka.ui.Controls.registerElement(
@@ -40,7 +39,6 @@
 
     const errName = getErrorName(err.code);
     let heading = `${errName} (${err.message})`;
-
     let message = "";
 
     if (shaka.util.Error.Code.BAD_HTTP_STATUS === err.code) {
@@ -52,13 +50,19 @@
     }
 
     const spinner = container.querySelector(".shaka-spinner-container");
-    spinner.innerHTML = `
-    <div class="flex justify-center items-center text-center flex-col gap-2 px-4" style="max-width:65%">
-    <div class="mb-3"><svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 24 24"><path fill="currentColor" d="M12 17q.425 0 .713-.288T13 16t-.288-.712T12 15t-.712.288T11 16t.288.713T12 17m-1-4h2V7h-2zm1 9q-2.075 0-3.9-.788t-3.175-2.137T2.788 15.9T2 12t.788-3.9t2.137-3.175T8.1 2.788T12 2t3.9.788t3.175 2.137T21.213 8.1T22 12t-.788 3.9t-2.137 3.175t-3.175 2.138T12 22m0-2q3.35 0 5.675-2.325T20 12t-2.325-5.675T12 4T6.325 6.325T4 12t2.325 5.675T12 20m0-8"/></svg></div>
-    <h3 class="text-base font-bold">${heading}</h3>
-    <p class="text-sm">${message}</p>
-    </div>
-    `;
+    if (spinner) {
+      spinner.innerHTML = `
+      <div class="flex justify-center items-center text-center flex-col gap-4 px-8 py-10 glass-panel rounded-3xl border border-red-500/20 shadow-2xl" style="max-width:85%">
+        <div class="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center text-red-500 mb-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><path fill="currentColor" d="M12 17q.425 0 .713-.288T13 16t-.288-.712T12 15t-.712.288T11 16t.288.713T12 17m-1-4h2V7h-2zm1 9q-2.075 0-3.9-.788t-3.175-2.137T2.788 15.9T2 12t.788-3.9t2.137-3.175T8.1 2.788T12 2t3.9.788t3.175 2.137T21.213 8.1T22 12t-.788 3.9t-2.137 3.175t-3.175 2.138T12 22m0-2q3.35 0 5.675-2.325T20 12t-2.325-5.675T12 4T6.325 6.325T4 12t2.325 5.675T12 20m0-8"/></svg>
+        </div>
+        <div class="space-y-1">
+          <h3 class="text-lg font-black text-white uppercase tracking-tight">${errName}</h3>
+          <p class="text-sm text-on-surface-variant font-medium">${message || err.message}</p>
+        </div>
+      </div>
+      `;
+    }
   }
 
   onMount(async () => {
@@ -82,15 +86,6 @@
     );
 
     player = new shaka.Player();
-
-    player.addEventListener(
-      "shaka.Player.MediaQualityChangedEvent",
-      (event) => {
-        console.log(event);
-      },
-      true
-    );
-
     ui = new shaka.ui.Overlay(player, container, video);
 
     const config = {
@@ -100,34 +95,25 @@
       addBigPlayButton: false,
 
       seekBarColors: {
-        base: "rgba(255,255,255,.2)",
-        buffered: "rgba(255,255,255,.4)",
-        played: "rgb(255,0,0)",
+        base: "rgba(255,255,255,.15)",
+        buffered: "rgba(255,255,255,.25)",
+        played: "rgb(99, 102, 241)", // Indigo 500 to match theme
       },
 
       volumeBarColors: {
-        base: "rgba(255, 255, 255, 0.54)",
+        base: "rgba(255, 255, 255, 0.3)",
         level: "rgb(255, 255, 255)",
       },
 
       controlPanelElements: [
         "play_pause",
-
-        //"skip_to_live",
-
         "time_and_duration",
-
         "mute",
         "volume",
-
         "spacer",
-
         "captions",
-
         "overflow_menu",
-
         "picture_in_picture",
-
         "fullscreen",
       ],
     };
@@ -137,18 +123,14 @@
       manifest: {
         dash: {
           autoCorrectDrift: true,
-
-          //ignoreMinBufferTime: true,
           ignoreSuggestedPresentationDelay: true,
-          //updatePeriod: 10,
         },
-
         hls: {
           liveSegmentsDelay: 3,
         },
       },
       abr: {
-        enabled: false,
+        enabled: true,
         preferNetworkInformationBandwidth: true,
       },
       streaming: {
@@ -157,7 +139,6 @@
         inaccurateManifestTolerance: 0,
         rebufferingGoal: 5,
         bufferingGoal: 15,
-        //lowLatencyMode: true,
         segmentPrefetchLimit: 3,
       },
     });
@@ -165,7 +146,6 @@
     player.attach(video);
 
     const volume = localStorage.getItem("player_volume");
-
     if (volume) {
       video.volume = volume;
       video.dispatchEvent(new CustomEvent("volumechange"));
@@ -176,15 +156,10 @@
 
   const loadStream = () => {
     const spinner = container.querySelector(".shaka-spinner-container");
-
-    if (spinner) {
-      spinner.setAttribute("style", "display:flex!important");
-    }
+    if (spinner) spinner.setAttribute("style", "display:flex!important");
 
     let mimeType = null;
-
     let streamType = "progressive";
-
     const streamUrlObj = new URL(stream.streamUrl);
 
     if (stream.streamType === "auto") {
@@ -194,130 +169,61 @@
         streamType = "dash";
       }
     } else {
-      streamType =
-        stream.streamType === "application/dash+xml" ? "dash" : "hls";
+      streamType = stream.streamType === "application/dash+xml" ? "dash" : "hls";
       mimeType = stream.streamType;
     }
 
-    if (streamType === "dash") {
-      player.configure("streaming.lowLatencyMode", false);
-    }
+    if (streamType === "dash") player.configure("streaming.lowLatencyMode", false);
 
     const additionalHeaders = parseHeaders(stream.requestHeaders);
     const licenseHeaders = parseHeaders(stream.licenseHeaders);
     const certificateHeaders = parseHeaders(stream.certificateHeaders);
 
-    // Make an headers object with the necessary headers
-    // Accurate referer and origin must be set otherwise some servers will reject the request
     const headers = {
-      referer:
-        stream.referer.trim().length > 0
-          ? stream.referer.trim()
-          : streamUrlObj.origin + "/",
-      origin:
-        stream.origin.trim().length > 0
-          ? stream.origin.trim()
-          : streamUrlObj.origin,
+      referer: stream.referer.trim() || streamUrlObj.origin + "/",
+      origin: stream.origin.trim() || streamUrlObj.origin,
       ...additionalHeaders,
     };
 
-    if (stream.userAgent.trim().length) {
-      headers["user-agent"] = stream.userAgent.trim();
-    }
+    if (stream.userAgent.trim()) headers["user-agent"] = stream.userAgent.trim();
+    if (stream.cookie.trim()) headers["cookie"] = stream.cookie.trim();
 
-    if (stream.cookie.trim().length) {
-      headers["cookie"] = stream.cookie.trim();
-    }
-
-    // Handle inline clearkey DRM
-    if (
-      stream.drmScheme === "clearkey_inline" &&
-      stream.clearKey.trim().length > 0
-    ) {
+    if (stream.drmScheme === "clearkey_inline" && stream.clearKey.trim()) {
       const parts = stream.clearKey.split(":");
-
       if (parts.length === 2) {
-        const kid = parts[0].trim();
-        const kvalue = parts[1].trim();
-
-        const clearkeyDRM = {
-          clearKeys: {},
-        };
-
-        clearkeyDRM.clearKeys[kid] = kvalue;
-
+        const clearkeyDRM = { clearKeys: {} };
+        clearkeyDRM.clearKeys[parts[0].trim()] = parts[1].trim();
         player.configure("drm", clearkeyDRM);
       }
     }
 
-    if (
-      stream.drmScheme === "com.widevine.alpha" ||
-      stream.drmScheme === "com.microsoft.playready"
-    ) {
-      const widevineConfig = {
-        servers: {
-          [stream.drmScheme]: stream.licenseUrl.trim(),
-        },
-      };
-
-      if (stream.certificateUrl.trim().length) {
-        widevineConfig.advanced = {
-          [stream.drmScheme]: {
-            serverCertificate: stream.certificateUrl.trim(),
-          },
-        };
+    if (["com.widevine.alpha", "com.microsoft.playready"].includes(stream.drmScheme)) {
+      const drmConfig = { servers: { [stream.drmScheme]: stream.licenseUrl.trim() } };
+      if (stream.certificateUrl.trim()) {
+        drmConfig.advanced = { [stream.drmScheme]: { serverCertificate: stream.certificateUrl.trim() } };
       }
-
-      player.configure("drm", widevineConfig);
+      player.configure("drm", drmConfig);
     }
 
     if (stream.drmScheme === "org.w3.clearkey") {
-      const clearKeyConfig = {
-        servers: {
-          "org.w3.clearkey": stream.licenseUrl.trim(),
-        },
-      };
-
-      player.configure("drm", clearKeyConfig);
+      player.configure("drm", { servers: { "org.w3.clearkey": stream.licenseUrl.trim() } });
     }
 
     const networkingEngine = player.getNetworkingEngine();
-
-    // Register a request filter to set headers for specific requests
-    // @ts-ignore
     networkingEngine.registerRequestFilter((type, request) => {
-      // By default all requests will have the custom request headers set
-      request.headers = {
-        ...request.headers,
-        ...headers,
-      };
-
-      // Can be overridden for license and certificate requests
+      request.headers = { ...request.headers, ...headers };
       if (type == shaka.net.NetworkingEngine.RequestType.LICENSE) {
-        request.headers = {
-          ...request.headers,
-          ...licenseHeaders,
-        };
-
-        // If content type is missing for clearkey server license request use json as default
-        // as many servers expect that
-        if (
-          stream.drmScheme === "org.w3.clearkey" &&
-          !request.headers["content-type"]
-        ) {
+        request.headers = { ...request.headers, ...licenseHeaders };
+        if (stream.drmScheme === "org.w3.clearkey" && !request.headers["content-type"]) {
           request.headers["content-type"] = "application/json";
         }
       }
-
       if (type == shaka.net.NetworkingEngine.RequestType.SERVER_CERTIFICATE) {
-        request.headers = {
-          ...request.headers,
-          ...certificateHeaders,
-        };
+        request.headers = { ...request.headers, ...certificateHeaders };
       }
     });
 
-    if (stream.shakaConfig.trim().length) {
+    if (stream.shakaConfig.trim()) {
       try {
         const additionalConfig = JSON5.parse(stream.shakaConfig);
         player.configure(additionalConfig);
@@ -326,58 +232,30 @@
       }
     }
 
-    player
-      .load(stream.streamUrl, null, mimeType)
-      .then(() => {
-        if (spinner) {
-          spinner.removeAttribute("style");
-        }
-      })
-      .catch(onErrorEvent);
+    player.load(stream.streamUrl, null, mimeType).then(() => {
+      if (spinner) spinner.removeAttribute("style");
+    }).catch(onErrorEvent);
   };
 
   onDestroy(() => {
-    if (ui) {
-      ui.destroy();
-    }
-
-    if (player) {
-      player.destroy();
-    }
+    if (ui) ui.destroy();
+    if (player) player.destroy();
   });
 
-  /**
-   *
-   * @param event {Event}
-   */
   function handleVolumeChange(event) {
-    const target = /** @type {HTMLVideoElement} */ (event.target);
-    localStorage.setItem("player_volume", target.volume.toString());
+    localStorage.setItem("player_volume", event.target.volume.toString());
   }
 
-  /**
-   *
-   * @param event {WheelEvent}
-   */
   function handleVolumeControl(event) {
-    const target = /** @type {Element} */ (event.target);
-    if (!target.closest(".shaka-mute-button, .shaka-volume-bar-container")) {
-      return;
-    }
+    if (!event.target.closest(".shaka-mute-button, .shaka-volume-bar-container")) return;
     const volumeChange = 0.06;
-
-    if (event.deltaY < 0) {
-      // Scrolling up increases volume
-      video.volume = Math.min(1, video.volume + volumeChange);
-    } else {
-      // Scrolling down decreases volume
-      video.volume = Math.max(0, video.volume - volumeChange);
-    }
+    if (event.deltaY < 0) video.volume = Math.min(1, video.volume + volumeChange);
+    else video.volume = Math.max(0, video.volume - volumeChange);
   }
 </script>
 
 <div
-  class="!m-0 w-full liv-theme youtube-theme"
+  class="!m-0 w-full liv-theme youtube-theme glass-panel"
   bind:this={container}
   on:wheel={handleVolumeControl}
 >
@@ -387,7 +265,22 @@
     bind:this={video}
     {...$$restProps}
     autoplay
-    style="object-fit:contain;min-height:60vh"
-    class="w-full h-full"
+    class="w-full h-full aspect-video bg-black"
   ></video>
 </div>
+
+<style>
+  :global(.shaka-video-container) {
+    background: black !important;
+  }
+  :global(.shaka-controls-container) {
+    background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%) !important;
+  }
+  :global(.shaka-range-container) {
+    height: 4px !important;
+    transition: height 0.2s ease !important;
+  }
+  :global(.shaka-range-container:hover) {
+    height: 6px !important;
+  }
+</style>

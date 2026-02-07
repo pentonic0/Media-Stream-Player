@@ -17,6 +17,11 @@
   import refreshIcon from "@iconify-icons/mdi/refresh";
   import libraryIcon from "@iconify-icons/mdi/library-shelves";
   import infoIcon from "@iconify-icons/mdi/information-outline";
+  import tuneIcon from "@iconify-icons/mdi/tune-variant";
+  import shieldIcon from "@iconify-icons/mdi/shield-key-outline";
+  import webIcon from "@iconify-icons/mdi/web";
+  import codeIcon from "@iconify-icons/mdi/xml";
+
   import VideoPlayer from "$lib/components/VideoPlayer.svelte";
   import Dialog from "$lib/components/Dialog.svelte";
   import parseCurl from "parse-curl";
@@ -75,45 +80,20 @@
   };
   const HISTORY_LIMIT = 12;
 
-  // Define rules here
   const rules = {
-    /**
-     *
-     * @param value {String}
-     */
     streamUrl: (value) => {
       if (!value.toString().trim()) return "Stream URL is required";
-
-      try {
-        new URL(value);
-      } catch (e) {
-        return "Must be a valid URL";
-      }
-
+      try { new URL(value); } catch (e) { return "Must be a valid URL"; }
       return null;
     },
-
-    /**
-     *
-     * @param value {String}
-     */
     shakaConfig: (value) => {
       if (!value.toString().trim()) return null;
-
-      try {
-        JSON5.parse(value);
-      } catch (e) {
-        return "Must be valid JSON/JSON5";
-      }
-
+      try { JSON5.parse(value); } catch (e) { return "Must be valid JSON/JSON5"; }
       return null;
     },
   };
 
-  const createId = () =>
-    crypto?.randomUUID
-      ? crypto.randomUUID()
-      : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const createId = () => crypto?.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
   const getStreamPayload = (data) => {
     const payload = {};
@@ -126,13 +106,10 @@
   const loadStoredList = (key) => {
     try {
       const stored = localStorage.getItem(key);
-      if (!stored) {
-        return [];
-      }
+      if (!stored) return [];
       const parsed = JSON.parse(stored);
       return Array.isArray(parsed) ? parsed : [];
     } catch (error) {
-      console.warn("Failed to parse stored list", error);
       return [];
     }
   };
@@ -185,13 +162,9 @@
   };
 
   const formatTimestamp = (value) => {
-    if (!value) {
-      return "Just now";
-    }
+    if (!value) return "Just now";
     const parsed = new Date(value);
-    return Number.isNaN(parsed.getTime())
-      ? "Just now"
-      : parsed.toLocaleString();
+    return Number.isNaN(parsed.getTime()) ? "Just now" : parsed.toLocaleString();
   };
 
   onMount(() => {
@@ -199,38 +172,18 @@
     savedStreams = loadStoredList(STORAGE_KEYS.saved);
   });
 
-  /**
-   *
-   * @param id {String}
-   */
   const resetTextAreaHeight = (id) => {
     const textarea = document.getElementById(id);
-
-    if (!textarea) {
-      return;
-    }
-
+    if (!textarea) return;
     setTimeout(() => {
-      const spaceEvent = new InputEvent("input", {
-        bubbles: true,
-        cancelable: true,
-        inputType: "insertText",
-        data: "",
-      });
+      const spaceEvent = new InputEvent("input", { bubbles: true, cancelable: true, inputType: "insertText", data: "" });
       textarea.dispatchEvent(spaceEvent);
     }, 0);
   };
 
-  /**
-   *
-   * @param event {InputEvent|Object}
-   */
   const validateField = (event) => {
-    const input = /** @type {HTMLInputElement | HTMLTextAreaElement} */ (
-      event.target
-    );
+    const input = /** @type {HTMLInputElement | HTMLTextAreaElement} */ (event.target);
     const name = input.id;
-
     const value = formData[name];
     const rule = rules[name];
     if (rule) {
@@ -244,168 +197,78 @@
     }
   };
 
-  /**
-   *
-   * @param event {ClipboardEvent}
-   */
   const handlePaste = (event) => {
     const pastedText = event.clipboardData.getData("text").trim();
     if (pastedText.startsWith("curl")) {
       event.preventDefault();
-
       try {
         const parsedData = parseCurl(pastedText);
-
-        if (!parsedData.url) {
-          throw new Error("Only cURL bash command is supported.");
-        }
-
-        snackbar.show({
-          message: "cURL command detected. Autofilled parameters.",
-        });
-
+        if (!parsedData.url) throw new Error("Only cURL bash command is supported.");
+        snackbar.show({ message: "cURL command detected. Autofilled parameters." });
         formData.streamUrl = parsedData.url;
-
         let headerText = "";
-
         for (const key in parsedData.header) {
           const headerName = key.trim().toLowerCase();
           const value = parsedData.header[key];
-
-          if (["cookie", "set-cookie"].includes(headerName)) {
-            formData.cookie = value;
-            continue;
-          }
-
-          if (["origin", "referer"].includes(headerName)) {
-            formData[headerName] = value;
-            continue;
-          }
-
-          if (headerName === "user-agent") {
-            formData.userAgent = value;
-            continue;
-          }
-
+          if (["cookie", "set-cookie"].includes(headerName)) { formData.cookie = value; continue; }
+          if (["origin", "referer"].includes(headerName)) { formData[headerName] = value; continue; }
+          if (headerName === "user-agent") { formData.userAgent = value; continue; }
           headerText += headerName + " : " + value + "\n";
         }
-
         formData.requestHeaders = headerText;
-
-        // Dispatch an event to adjust textarea's height
         resetTextAreaHeight("requestHeaders");
-
         validateField(event);
       } catch (error) {
-        snackbar.show({
-          message: "Invalid CURL command. " + error,
-        });
+        snackbar.show({ message: "Invalid CURL command. " + error });
       }
-
       return;
     }
 
-    // Try to detect NS Player formatted URLs (Hacky approach will improve later)
-
     const decodedPaste = decodeURI(pastedText);
-
-    // Try to detect NS Player formatted URLs
     if (decodedPaste.includes("|")) {
       event.preventDefault();
       const [url, search] = decodedPaste.split("|");
-
-      // Build a dummy URL to parse the searchParams
       const nsPlayerURL = new URL("https://google.com?" + search.trim());
-
       formData.streamUrl = url;
-
-      // Manually trigger validation
       validateField(event);
-
       const drmScheme = nsPlayerURL.searchParams.get("drmScheme");
       const drmLicense = nsPlayerURL.searchParams.get("drmLicense");
-
       let autofilled = false;
-
-      ["origin", "userAgent", "referer", "referrer", "cookie"].forEach(
-        (key) => {
-          const value = nsPlayerURL.searchParams.get(key);
-          if (value) {
-            formData[key === "referrer" ? "referer" : key] = value;
-            autofilled = true;
-          }
-        }
-      );
-
-      switch (drmScheme) {
-        case "clearkey":
-          // If a : is present it's inline otherwise it's a server
-          if (drmLicense.includes(":")) {
-            formData.drmScheme = "clearkey_inline";
-            formData.clearKey = drmLicense;
-          } else {
-            formData.drmScheme = "org.w3.clearkey";
-            formData.licenseUrl = drmLicense;
-          }
+      ["origin", "userAgent", "referer", "referrer", "cookie"].forEach((key) => {
+        const value = nsPlayerURL.searchParams.get(key);
+        if (value) {
+          formData[key === "referrer" ? "referer" : key] = value;
           autofilled = true;
-          break;
-        default:
-          break;
-      }
-
-      snackbar.show({
-        message:
-          "NS Player URL detected. " +
-          (autofilled
-            ? "Autofilled parameters."
-            : "No supported paramters found."),
+        }
       });
-
+      if (drmScheme === "clearkey") {
+        if (drmLicense.includes(":")) {
+          formData.drmScheme = "clearkey_inline";
+          formData.clearKey = drmLicense;
+        } else {
+          formData.drmScheme = "org.w3.clearkey";
+          formData.licenseUrl = drmLicense;
+        }
+        autofilled = true;
+      }
+      snackbar.show({ message: "NS Player URL detected. " + (autofilled ? "Autofilled parameters." : "No supported paramters found.") });
       return;
     }
-
-    // Validate field as a fallback
     validateField(event);
   };
 
   const handleSubmit = (event) => {
-    event.preventDefault();
-
+    if (event) event.preventDefault();
     for (const name in formData) {
       validateField({ target: { id: name, value: formData[name] } });
     }
-
     if (Object.keys(errors).length !== 0) {
       const firstKey = Object.keys(errors)[0];
-      document.getElementById(firstKey).focus();
+      document.getElementById(firstKey)?.focus();
       return;
     }
-
     updateHistory(formData);
     isModalOpen = true;
-  };
-
-  const handleDrmSchemeChange = () => {
-    if (formData.drmScheme === "clearkey_inline") {
-      tick().then(() => {
-        setTimeout(() => {
-          document.getElementById("clearKey").focus();
-        }, 0);
-      });
-    }
-  };
-
-  const handleHeadersPlaceholder = (event) => {
-    if (event.target.value.trim().length === 0) {
-      event.target.placeholder =
-        "Authorization: Bearer\nX-Custom-Header: Value";
-    } else {
-      event.target.placeholder = "";
-    }
-  };
-
-  const handleHeadersPlaceholderBlur = (event) => {
-    event.target.placeholder = "";
   };
 
   const resetFormData = () => {
@@ -415,10 +278,7 @@
       "shakaConfig",
       "licenseHeaders",
       "certificateHeaders",
-    ].forEach((id) => {
-      resetTextAreaHeight(id);
-    });
-
+    ].forEach((id) => resetTextAreaHeight(id));
     errors = {};
   };
 
@@ -428,474 +288,251 @@
       snackbar?.show({ message: "Provide a name to save this stream." });
       return;
     }
-
     const urlError = rules.streamUrl(formData.streamUrl);
     if (urlError) {
       snackbar?.show({ message: urlError });
       return;
     }
-
     const payload = getStreamPayload(formData);
     updateSavedStreams([
-      {
-        id: createId(),
-        name,
-        createdAt: new Date().toISOString(),
-        stream: payload,
-      },
+      { id: createId(), name, createdAt: new Date().toISOString(), stream: payload },
       ...savedStreams,
     ]);
     snackbar?.show({ message: "Stream saved for later." });
-
     savedStreamName = "";
   };
 
-  $: isModalOpen
-    ? document.body.classList.add("modal-open")
-    : document.body.classList.remove("modal-open");
+  $: isModalOpen ? document.body.classList.add("modal-open") : document.body.classList.remove("modal-open");
 </script>
 
-<div class="app-shell space-y-8">
-  <header class="panel-card app-hero">
-    <div class="flex flex-wrap items-start justify-between gap-6">
-      <div class="space-y-3">
-        <span class="hero-badge">Stream workspace</span>
-        <h2 class="hero-title text-4xl font-black">Media Stream Player</h2>
-        <p class="text-sm text-on-surface max-w-xl">
-          Build, save, and launch streams with a polished workflow for quick
-          playback and modern stream control.
-        </p>
-        <div class="flex flex-wrap gap-3 items-center">
-          <div class="stat-chip">
-            <p class="text-xs text-on-surface">Saved</p>
-            <p class="text-base font-semibold text-on-body">
-              {savedStreams.length}
-            </p>
-          </div>
-          <div class="stat-chip">
-            <p class="text-xs text-on-surface">History</p>
-            <p class="text-base font-semibold text-on-body">
-              {streamHistory.length}
-            </p>
-          </div>
-          <a class="nav-pill" href="/library">
-            <Icon icon={libraryIcon} size={0.9} />
-            <span>Library</span>
-          </a>
-        </div>
-      </div>
-      <div class="flex flex-wrap gap-2">
-        <Button variant="outlined" onclick={resetFormData}>
-          <Icon icon={refreshIcon} size={0.9} />
-          <span class="ml-1">Reset</span>
-        </Button>
-        <Button onclick={handleSubmit}>
-          <Icon icon={playCircleIcon} size={0.9} />
-          <span class="ml-1">Play stream</span>
-        </Button>
-      </div>
+<div class="space-y-10 animate-fade-in">
+  <header class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+    <div class="space-y-2">
+      <div class="hero-badge">Stream Workspace</div>
+      <h1 class="hero-title">New Session</h1>
+      <p class="text-on-surface-variant text-sm max-w-lg leading-relaxed">
+        Configure your stream parameters below. Support for DASH, HLS, and various DRM schemes with advanced header overrides.
+      </p>
+    </div>
+    <div class="flex items-center gap-3">
+      <Button variant="outlined" onclick={resetFormData} class="!rounded-xl h-11">
+        <Icon icon={refreshIcon} size={0.9} />
+        <span class="ml-2">Clear Form</span>
+      </Button>
+      <Button onclick={handleSubmit} class="!rounded-xl h-11 bg-primary text-white shadow-lg shadow-primary/20">
+        <Icon icon={playCircleIcon} size={1} />
+        <span class="ml-2 font-bold">Launch Player</span>
+      </Button>
     </div>
   </header>
 
-  <div class="grid gap-6 xl:grid-cols-[minmax(0,2.1fr)_minmax(0,1fr)]">
-    <div class="space-y-6">
-      <div class="panel-card panel-card--elevated space-y-6">
-        <div class="section-panel">
-          <p class="text-sm text-on-surface">Craft your stream setup with a cinematic interface designed for speed, clarity, and confidence.</p>
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div class="lg:col-span-2 space-y-8">
+      <!-- Main Config -->
+      <section class="glass-card p-8 space-y-6">
+        <div class="flex items-center gap-3 pb-2 border-b border-white/5">
+          <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+            <Icon icon={tuneIcon} class="text-primary text-lg" />
+          </div>
+          <h3 class="text-lg font-bold text-on-surface">Base Configuration</h3>
         </div>
-        <div class="grid grid-cols-12 gap-3 fw-input">
-          <div class="md:col-span-8 col-span-7">
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div class="md:col-span-3 space-y-2">
             <TextField
               autocomplete="off"
-              label="Stream URL"
+              label="Stream Manifest URL"
               id="streamUrl"
-              onfocus={(e) => {
-                e.currentTarget.placeholder = e.currentTarget.value.length
-                  ? ""
-                  : "Paste NS Player URL or cURL command here for autofill";
-              }}
-              onblur={(e) => {
-                e.currentTarget.placeholder = "";
-              }}
               onpaste={handlePaste}
-              class="w-full"
+              class="w-full !m-0"
               bind:value={formData.streamUrl}
               oninput={validateField}
               error={errors.streamUrl}
             />
-
-            <span
-              class={{
-                "text-error": errors.streamUrl,
-
-                "text-on-surface": !errors.streamUrl,
-                "mt-2 text-sm block": true,
-              }}
-            >
-              {#if errors.streamUrl}
-                {errors.streamUrl}
-              {:else}
-                The URL to the media stream
-              {/if}
-            </span>
+            <p class="text-[11px] text-on-surface-variant px-1 italic">
+              Supports .m3u8, .mpd, or progressive MP4.
+            </p>
           </div>
-
-          <div class="md:col-span-4 col-span-5">
+          <div class="space-y-2">
             <Select
-              label="Type"
+              label="Format"
               options={streamTypes}
               bind:value={formData.streamType}
+              class="!m-0"
             />
-            <span></span>
-
-            <span class="block text-on-surface mt-3 text-sm"
-              >Leave to auto if unsure.</span
-            >
           </div>
         </div>
-        <!-- ./grid -->
+      </section>
 
-        <div class="section-title">
-          <h3 class="text-base font-semibold text-on-body">Headers</h3>
-          <div class="section-divider"></div>
+      <!-- Headers Config -->
+      <section class="glass-card p-8 space-y-6">
+        <div class="flex items-center gap-3 pb-2 border-b border-white/5">
+          <div class="w-8 h-8 rounded-lg bg-secondary/10 flex items-center justify-center">
+            <Icon icon={webIcon} class="text-secondary text-lg" />
+          </div>
+          <h3 class="text-lg font-bold text-on-surface">Network Headers</h3>
         </div>
-        <!-- ./flex -->
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-3 fw-input">
-          <div>
-            <TextField
-              autocomplete="off"
-              label="Cookie"
-              id="cookie"
-              bind:value={formData.cookie}
-            />
-            <span class="block text-on-surface mt-2 text-sm"
-              >Value for the Cookie header</span
-            >
-          </div>
-          <!-- ./mb-3 -->
-
-          <div>
-            <TextField
-              autocomplete="off"
-              label="Origin"
-              id="origin"
-              bind:value={formData.origin}
-            />
-            <span class="block text-on-surface mt-2 text-sm"
-              >Value for the Origin header</span
-            >
-          </div>
-          <!-- ./mb-3 -->
-
-          <div>
-            <TextField
-              autocomplete="off"
-              label="Referer"
-              id="referer"
-              bind:value={formData.referer}
-            />
-            <span class="block text-on-surface mt-2 text-sm"
-              >Value for the Referer header</span
-            >
-          </div>
-          <!-- ./mb-3 -->
-
-          <div>
-            <TextField
-              autocomplete="off"
-              label="User-Agent (Optional)"
-              id="userAgent"
-              placeholder=""
-              bind:value={formData.userAgent}
-            />
-            <span class="block text-on-surface mt-2 text-sm"
-              >Optional override for the User-Agent header</span
-            >
-          </div>
-          <!-- ./mb-3 -->
-
-          <div class="col-span-1 md:col-span-2 mt-3">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <TextField autocomplete="off" label="Origin" id="origin" bind:value={formData.origin} />
+          <TextField autocomplete="off" label="Referer" id="referer" bind:value={formData.referer} />
+          <TextField autocomplete="off" label="Cookie" id="cookie" bind:value={formData.cookie} />
+          <TextField autocomplete="off" label="User-Agent Override" id="userAgent" bind:value={formData.userAgent} />
+          <div class="md:col-span-2">
             <TextFieldMultiline
               autocomplete="off"
-              label="Additional Headers"
+              label="Additional Request Headers"
               id="requestHeaders"
-              placeholder=""
-              onfocus={handleHeadersPlaceholder}
-              onblur={handleHeadersPlaceholderBlur}
+              placeholder="Key: Value (one per line)"
               bind:value={formData.requestHeaders}
             />
-            <span class="block text-on-surface mt-2 text-sm"
-              >Additional headers for the request in key: value format. One per
-              line.</span
-            >
           </div>
         </div>
-        <!-- /.grid -->
+      </section>
 
-        <div class="section-title">
-          <h3 class="text-base font-semibold text-on-body">DRM</h3>
-          <div class="section-divider"></div>
-        </div>
-        <!-- ./flex -->
-
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-3 fw-input">
-          <div>
-            <Select
-              label="DRM Scheme"
-              id="drmScheme"
-              onchange={handleDrmSchemeChange}
-              options={drmSchemes}
-              bind:value={formData.drmScheme}
-            />
-            <span class="block text-on-surface mt-3 text-sm"
-              >Choose the DRM Scheme</span
-            >
+      <!-- DRM Config -->
+      <section class="glass-card p-8 space-y-6">
+        <div class="flex items-center gap-3 pb-2 border-b border-white/5">
+          <div class="w-8 h-8 rounded-lg bg-tertiary/10 flex items-center justify-center">
+            <Icon icon={shieldIcon} class="text-tertiary text-lg" />
           </div>
-          <!-- ./mb-3 -->
+          <h3 class="text-lg font-bold text-on-surface">Content Protection (DRM)</h3>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Select
+            label="DRM Scheme"
+            id="drmScheme"
+            onchange={() => formData.drmScheme === "clearkey_inline" && tick().then(() => document.getElementById("clearKey")?.focus())}
+            options={drmSchemes}
+            bind:value={formData.drmScheme}
+          />
 
           {#if formData.drmScheme === "clearkey_inline"}
-            <div>
-              <TextField
-                autocomplete="off"
-                label="ClearKeyID:Key"
-                id="clearKey"
-                bind:value={formData.clearKey}
-              />
-              <span class="block text-on-surface mt-2 text-sm"
-                >Clearkey in kid:key format</span
-              >
-            </div>
-            <!-- ./mb-3 -->
+            <TextField autocomplete="off" label="ClearKey (kid:key)" id="clearKey" bind:value={formData.clearKey} />
           {/if}
 
           {#if !["none", "clearkey_inline"].includes(formData.drmScheme)}
-            <div>
-              <TextField
-                autocomplete="off"
-                label="License URL"
-                id="licenseUrl"
-                bind:value={formData.licenseUrl}
-              />
-              <span class="block text-on-surface mt-2 text-sm"
-                >The license server URL</span
-              >
+            <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <TextField autocomplete="off" label="License Server URL" id="licenseUrl" bind:value={formData.licenseUrl} />
+              <TextField autocomplete="off" label="Certificate URL (Optional)" id="certificateUrl" bind:value={formData.certificateUrl} />
+              <TextFieldMultiline label="License Headers" id="licenseHeaders" bind:value={formData.licenseHeaders} />
+              <TextFieldMultiline label="Certificate Headers" id="certificateHeaders" bind:value={formData.certificateHeaders} />
             </div>
-
-            {#if formData.drmScheme === "com.widevine.alpha" || formData.drmScheme === "com.microsoft.playready"}
-              <div>
-                <TextField
-                  autocomplete="off"
-                  label="Certificate URL"
-                  id="certificateUrl"
-                  bind:value={formData.certificateUrl}
-                />
-                <span class="block text-on-surface mt-2 text-sm"
-                  >The certificate URL</span
-                >
-              </div>
-
-              <div></div>
-            {/if}
-
-            <div>
-              <TextFieldMultiline
-                autocomplete="off"
-                label="License Headers"
-                id="licenseHeaders"
-                placeholder=""
-                onfocus={handleHeadersPlaceholder}
-                onblur={handleHeadersPlaceholderBlur}
-                bind:value={formData.licenseHeaders}
-              />
-              <span class="block text-on-surface mt-2 text-sm"
-                >Headers for license request in key: value format</span
-              >
-            </div>
-
-            {#if formData.drmScheme === "com.widevine.alpha" || formData.drmScheme === "com.microsoft.playready"}
-              <div>
-                <TextFieldMultiline
-                  autocomplete="off"
-                  label="Certificate Headers"
-                  id="certificateHeaders"
-                  placeholder=""
-                  onfocus={handleHeadersPlaceholder}
-                  onblur={handleHeadersPlaceholderBlur}
-                  bind:value={formData.certificateHeaders}
-                />
-                <span class="block text-on-surface mt-2 text-sm"
-                  >Headers for certificate request in key: value format</span
-                >
-              </div>
-            {/if}
           {/if}
         </div>
-        <!-- /.grid -->
+      </section>
 
-        <div class="section-title">
-          <h3 class="text-base font-semibold text-on-body">Advanced</h3>
-          <div class="section-divider"></div>
+      <!-- Advanced -->
+      <section class="glass-card p-8 space-y-6">
+        <div class="flex items-center gap-3 pb-2 border-b border-white/5">
+          <div class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center">
+            <Icon icon={codeIcon} class="text-on-surface-variant text-lg" />
+          </div>
+          <h3 class="text-lg font-bold text-on-surface">Advanced Shaka Config</h3>
         </div>
-        <!-- ./flex -->
-
-        <div class="fw-input">
-          <TextFieldMultiline
-            autocomplete="off"
-            label="Shaka Player Config"
-            id="shakaConfig"
-            placeholder=""
-            oninput={validateField}
-            bind:value={formData.shakaConfig}
-            error={errors.shakaConfig}
-          />
-          <span
-            class={{
-              "text-error": errors.shakaConfig,
-
-              "text-on-surface": !errors.shakaConfig,
-              "mt-2 text-sm block": true,
-            }}
-          >
-            {#if errors.shakaConfig}
-              {errors.shakaConfig}
-            {:else}
-              Additional Shaka player configuration as JSON/JSON5 object
-            {/if}
-          </span>
-        </div>
-      </div>
+        <TextFieldMultiline
+          autocomplete="off"
+          label="JSON/JSON5 Configuration"
+          id="shakaConfig"
+          bind:value={formData.shakaConfig}
+          oninput={validateField}
+          error={errors.shakaConfig}
+        />
+      </section>
     </div>
 
-    <aside class="space-y-6">
-      <div class="panel-card panel-card--glass space-y-4">
-        <div class="flex items-center justify-between gap-3">
-          <div class="flex items-center gap-2">
-            <Icon icon={contentSaveIcon} size={1} />
-            <h3 class="text-base font-semibold text-on-body">
-              Quick save
-            </h3>
-          </div>
-          <span class="text-xs text-on-surface">Save for later</span>
+    <aside class="space-y-8">
+      <!-- Quick Save -->
+      <div class="glass-panel rounded-[2rem] p-6 space-y-6 border border-white/5 shadow-2xl">
+        <div class="flex items-center gap-3">
+          <Icon icon={contentSaveIcon} class="text-primary text-xl" />
+          <h3 class="font-bold text-on-surface">Snapshot</h3>
         </div>
-
-        <div class="grid gap-3">
+        <div class="space-y-4">
           <TextField
             autocomplete="off"
-            label="Save current stream as"
+            label="Profile Name"
             id="savedStreamName"
             bind:value={savedStreamName}
+            class="!m-0"
           />
-          <div class="flex flex-wrap gap-2">
-            <Button onclick={saveStream}>
-              <Icon icon={contentSaveIcon} size={0.9} />
-              <span class="ml-1">Save stream</span>
-            </Button>
-            <a class="nav-pill nav-pill--ghost" href="/library">
-              <Icon icon={libraryIcon} size={0.9} />
-              <span>Manage library</span>
-            </a>
-          </div>
+          <Button onclick={saveStream} class="w-full !rounded-xl h-11 bg-white/5 text-on-surface hover:bg-white/10 border border-white/10">
+            <Icon icon={contentSaveIcon} size={0.9} />
+            <span class="ml-2">Save Profile</span>
+          </Button>
         </div>
       </div>
 
-      <div class="panel-card panel-card--glass space-y-4">
-        <div class="flex items-center justify-between gap-3">
-          <div class="flex items-center gap-2">
-            <Icon icon={bookmarkIcon} size={1} />
-            <h3 class="text-base font-semibold text-on-body">Saved Streams</h3>
-          </div>
-          {#if savedStreams.length}
-            <span class="text-xs text-on-surface"
-              >{savedStreams.length} saved</span
-            >
-          {/if}
+      <!-- Recent Saved -->
+      <div class="space-y-4">
+        <div class="flex items-center justify-between px-2">
+          <h3 class="text-sm font-bold uppercase tracking-widest text-on-surface-variant">Recent Saved</h3>
+          <a href="/library" class="text-xs font-semibold text-primary hover:underline">View All</a>
         </div>
 
-        {#if savedStreams.length}
-          <div class="space-y-3">
-            {#each savedStreams.slice(0, 4) as item}
-              <div class="saved-item">
-                <div class="flex items-start justify-between gap-3">
-                  <div>
-                    <p class="text-sm font-semibold text-on-body">
-                      {item.name}
-                    </p>
-                    <p class="text-xs text-on-surface break-all">
-                      {item.stream.streamUrl}
-                    </p>
-                    <p class="text-xs text-on-surface mt-1">
-                      Updated {formatTimestamp(item.updatedAt ?? item.createdAt)}
-                    </p>
-                  </div>
-                  <div class="flex flex-col gap-2">
-                    <Button
-                      iconType="full"
-                      title="Play saved stream"
-                      onclick={() => playStreamFromData(item.stream)}
-                    >
-                      <Icon icon={playCircleIcon} size={0.9} />
-                    </Button>
-                    <a
-                      class="icon-button"
-                      href={`/saved/${item.id}`}
-                      title="View saved stream details"
-                    >
-                      <Icon icon={infoIcon} size={0.9} />
-                    </a>
-                  </div>
+        <div class="space-y-3">
+          {#if savedStreams.length}
+            {#each savedStreams.slice(0, 3) as item}
+              <div class="glass-card p-4 group relative overflow-hidden">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-sm font-bold text-on-surface truncate pr-8">{item.name}</span>
+                  <button
+                    onclick={() => playStreamFromData(item.stream)}
+                    class="absolute top-3 right-3 w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg shadow-primary/30"
+                  >
+                    <Icon icon={playCircleIcon} size={0.8} />
+                  </button>
+                </div>
+                <p class="text-[10px] text-on-surface-variant truncate mb-2">{item.stream.streamUrl}</p>
+                <div class="flex items-center justify-between">
+                  <span class="text-[9px] text-on-surface/40 uppercase tracking-tighter">{formatTimestamp(item.updatedAt ?? item.createdAt)}</span>
+                  <a href={`/saved/${item.id}`} class="text-[10px] font-bold text-secondary hover:text-primary transition-colors">Details</a>
                 </div>
               </div>
             {/each}
-          </div>
-          {#if savedStreams.length > 4}
-            <a class="nav-pill nav-pill--ghost w-full justify-center" href="/library">
-              View all saved streams
-            </a>
+          {:else}
+            <div class="p-8 text-center glass-card border-dashed border-white/10">
+              <p class="text-xs text-on-surface-variant italic">No saved profiles yet.</p>
+            </div>
           {/if}
-        {:else}
-          <p class="text-sm text-on-surface">
-            Save stream setups you use often. They will appear here.
-          </p>
-        {/if}
+        </div>
       </div>
     </aside>
   </div>
-
-  <FAB
-    title="Play Stream"
-    style="position: fixed; bottom: 4%; right: 28px;z-index:10;"
-    color="primary"
-    elevation="normal"
-    onclick={handleSubmit}
-    icon={playCircleIcon}
-    text="Play"
-  />
 </div>
-<!-- /.container -->
+
+<FAB
+  title="Play Stream"
+  style="position: fixed; bottom: 32px; right: 32px; z-index: 100;"
+  color="primary"
+  elevation="normal"
+  onclick={handleSubmit}
+  icon={playCircleIcon}
+  text="Play Now"
+  class="!rounded-2xl shadow-2xl shadow-primary/40 h-14 px-6"
+/>
 
 <div class="player-modal">
   <Dialog
-    headline="Player"
+    headline="Stream Player"
     bind:open={isModalOpen}
     closedby="closerequest"
     closeOnEsc={true}
     icon={false}
   >
     {#snippet children()}
-      <Button
-        style="position: absolute;
-    top: 4px;
-    right: 10px;"
-        variant="outlined"
+      <button
+        class="absolute top-4 right-4 z-[1001] w-10 h-10 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-all border border-white/10"
         onclick={() => (isModalOpen = false)}
-        iconType="full"
       >
-        <Icon icon={closeIcon} size={0.9} />
-      </Button>
+        <Icon icon={closeIcon} size={1} />
+      </button>
 
       {#if isModalOpen}
-        <VideoPlayer stream={formData} />
+        <div class="bg-black w-full h-full flex items-center justify-center">
+          <VideoPlayer stream={formData} />
+        </div>
       {/if}
     {/snippet}
     {#snippet buttons()}{/snippet}
@@ -903,3 +540,19 @@
 </div>
 
 <Snackbar class="shaka-snack holder" bind:this={snackbar} />
+
+<style>
+  :global(.m3-text-field .m3-container),
+  :global(.m3-select .m3-container),
+  :global(.m3-text-field-multiline .m3-container) {
+    background: rgba(0,0,0,0.2) !important;
+    border: 1px solid rgba(255,255,255,0.05) !important;
+    transition: all 0.3s ease !important;
+  }
+  :global(.m3-text-field .m3-container:focus-within),
+  :global(.m3-select .m3-container:focus-within),
+  :global(.m3-text-field-multiline .m3-container:focus-within) {
+    border-color: rgba(var(--m3-scheme-primary), 0.5) !important;
+    background: rgba(var(--m3-scheme-primary), 0.05) !important;
+  }
+</style>
