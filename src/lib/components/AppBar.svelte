@@ -30,12 +30,14 @@
 </script>
 
 <div class="flex items-center h-8 appbar fixed w-full top-0 start-0">
-  <div class="ps-3 drag flex items-center">
+  <div class="ps-3 drag flex items-center gap-2">
     <img src="favicon.png" alt="MS" class="h-4 w-4 drag" />
+    <div class="drag inline-flex items-center gap-2">
+      <span class="text-sm font-semibold text-on-primary">Media Stream Player</span>
+      <span class="rounded-full border border-outline-variant px-2 py-0.5 text-[10px] uppercase tracking-[0.18em] text-on-surface">Pro UI</span>
+    </div>
   </div>
-  <div class="flex items-center drag h-full flex-1 px-2">
-    <span class="text-base text-on-primary">Media Stream Player</span>
-  </div>
+  <div class="flex items-center drag h-full flex-1 px-2"></div>
 
   <div class="flex justify-end window-controls gap-0 no-drag ms-auto">
     <!-- Minimize -->
