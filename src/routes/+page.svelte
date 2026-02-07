@@ -564,7 +564,6 @@
 
 <div class="player-modal">
   <Dialog
-    headline="Stream Player"
     bind:open={isModalOpen}
     closedby="closerequest"
     closeOnEsc={true}

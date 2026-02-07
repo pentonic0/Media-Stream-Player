@@ -111,6 +111,7 @@
         "mute",
         "volume",
         "spacer",
+        "skip_to_live",
         "captions",
         "overflow_menu",
         "picture_in_picture",
@@ -247,15 +248,15 @@
   }
 
   function handleVolumeControl(event) {
-    if (!event.target.closest(".shaka-mute-button, .shaka-volume-bar-container")) return;
-    const volumeChange = 0.06;
+    event.preventDefault();
+    const volumeChange = 0.05;
     if (event.deltaY < 0) video.volume = Math.min(1, video.volume + volumeChange);
     else video.volume = Math.max(0, video.volume - volumeChange);
   }
 </script>
 
 <div
-  class="!m-0 w-full liv-theme youtube-theme glass-panel"
+  class="!m-0 w-full aspect-video liv-theme youtube-theme glass-panel overflow-hidden"
   bind:this={container}
   on:wheel={handleVolumeControl}
 >
@@ -265,7 +266,7 @@
     bind:this={video}
     {...$$restProps}
     autoplay
-    class="w-full h-full aspect-video bg-black"
+    class="w-full h-full bg-black"
   ></video>
 </div>
 
@@ -282,5 +283,21 @@
   }
   :global(.shaka-range-container:hover) {
     height: 6px !important;
+  }
+  :global(.shaka-skip-live-button) {
+    color: white !important;
+    font-weight: bold !important;
+    background: rgba(239, 68, 68, 0.8) !important;
+    padding: 2px 6px !important;
+    border-radius: 4px !important;
+    font-size: 10px !important;
+    margin-right: 10px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    border: none !important;
+  }
+  :global(.shaka-skip-live-button:hover) {
+    background: rgb(239, 68, 68) !important;
+    transform: scale(1.05) !important;
   }
 </style>

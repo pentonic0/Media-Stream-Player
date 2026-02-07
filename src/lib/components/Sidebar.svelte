@@ -49,25 +49,6 @@
     {/each}
   </nav>
 
-  <div class="p-4 mt-auto">
-    <div class="relative overflow-hidden p-4 rounded-2xl bg-gradient-to-br from-white/[0.05] to-transparent border border-white/10 group">
-      <div class="absolute -right-4 -top-4 w-16 h-16 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all duration-500"></div>
-
-      <div class="flex items-center gap-2 mb-2 relative z-10">
-        <div class="w-5 h-5 rounded-md bg-primary/20 flex items-center justify-center">
-          <Icon icon={infoIcon} class="text-primary text-[10px]" />
-        </div>
-        <span class="text-[11px] font-bold text-white tracking-wide">Pro Version</span>
-      </div>
-      <p class="text-[10px] text-on-surface-variant leading-relaxed relative z-10">
-        Unlock advanced <span class="text-primary/80">DRM support</span> and cloud sync features.
-      </p>
-
-      <button class="mt-3 w-full py-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-[10px] font-bold text-primary border border-primary/20 transition-all relative z-10">
-        Upgrade Now
-      </button>
-    </div>
-  </div>
 </aside>
 
 <style>
