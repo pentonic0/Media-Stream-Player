@@ -459,12 +459,8 @@
   <header class="panel-card app-hero">
     <div class="flex flex-wrap items-start justify-between gap-6">
       <div class="space-y-3">
-        <p class="text-xs uppercase tracking-[0.25em] text-on-surface">
-          Stream workspace
-        </p>
-        <h2 class="text-3xl font-semibold text-on-body">
-          Media Stream Player
-        </h2>
+        <span class="hero-badge">Stream workspace</span>
+        <h2 class="hero-title text-4xl font-black">Media Stream Player</h2>
         <p class="text-sm text-on-surface max-w-xl">
           Build, save, and launch streams with a polished workflow for quick
           playback and modern stream control.
@@ -504,6 +500,9 @@
   <div class="grid gap-6 xl:grid-cols-[minmax(0,2.1fr)_minmax(0,1fr)]">
     <div class="space-y-6">
       <div class="panel-card panel-card--elevated space-y-6">
+        <div class="section-panel">
+          <p class="text-sm text-on-surface">Craft your stream setup with a cinematic interface designed for speed, clarity, and confidence.</p>
+        </div>
         <div class="grid grid-cols-12 gap-3 fw-input">
           <div class="md:col-span-8 col-span-7">
             <TextField

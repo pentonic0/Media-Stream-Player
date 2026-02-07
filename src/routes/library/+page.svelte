@@ -167,10 +167,8 @@
   <header class="panel-card app-hero">
     <div class="flex flex-wrap items-start justify-between gap-6">
       <div class="space-y-3">
-        <p class="text-xs uppercase tracking-[0.25em] text-on-surface">
-          Saved library
-        </p>
-        <h2 class="text-3xl font-semibold text-on-body">Stream Library</h2>
+        <span class="hero-badge">Saved library</span>
+        <h2 class="hero-title text-4xl font-black">Stream Library</h2>
         <p class="text-sm text-on-surface max-w-xl">
           Manage saved streams, review playback history, and jump straight back
           into trusted setups.
@@ -199,6 +197,9 @@
 
   <div class="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
     <section class="panel-card panel-card--glass space-y-4">
+      <div class="section-panel">
+        <p class="text-sm text-on-surface">Everything you trust in one premium workspace: saved presets, instant replay, and a clean timeline.</p>
+      </div>
       <div class="flex items-center justify-between gap-3">
         <div class="flex items-center gap-2">
           <Icon icon={bookmarkIcon} size={1} />
