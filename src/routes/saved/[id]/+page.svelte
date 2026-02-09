@@ -275,6 +275,7 @@
 <div class="player-modal">
   <Dialog
     headline="Stream Player"
+    class="video-player-dialog"
     bind:open={isModalOpen}
     closedby="closerequest"
     closeOnEsc={true}
@@ -289,7 +290,7 @@
       </button>
 
       {#if isModalOpen}
-        <div class="bg-black w-full h-full flex items-center justify-center">
+        <div class="video-player-frame">
           <VideoPlayer stream={formData} />
         </div>
       {/if}

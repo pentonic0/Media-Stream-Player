@@ -4,6 +4,7 @@
   /** @type {{
     icon?: any,
     headline?: string,
+    class?: string,
     buttons?: any,
     children: any,
     open: boolean,
@@ -16,6 +17,7 @@
   let {
     icon,
     headline,
+    class: className = "",
     buttons,
     children,
     open = $bindable(),
@@ -27,17 +29,21 @@
   $effect(() => {
     if (!dialog) return;
     if (open) {
-      dialog.show();
+      if (!dialog.open) {
+        dialog.show();
+      }
       document.body.classList.add("modal-open");
     } else {
-      dialog.close();
+      if (dialog.open) {
+        dialog.close();
+      }
       document.body.classList.remove("modal-open");
     }
   });
 </script>
 
 <dialog
-  class="glass-panel"
+  class={`glass-panel ${className}`}
   ontoggle={(e) => {
     open = e.newState == "open";
   }}
@@ -82,6 +88,7 @@
 
 <style>
   dialog {
+    z-index: 5000;
     background: rgba(var(--m3-scheme-surface-container-high) / 0.8) !important;
     backdrop-filter: blur(40px);
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
@@ -96,7 +103,9 @@
 
   dialog {
     position: fixed;
-    inset: 0;
+    top: 50%;
+    left: 50%;
+    margin: 0;
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
@@ -104,18 +113,27 @@
       opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1),
       visibility 0.4s cubic-bezier(0.4, 0, 0.2, 1),
       transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-    transform: scale(0.95) translateY(30px);
+    transform: translate(-50%, -50%) scale(0.95);
   }
   dialog[open] {
     opacity: 1;
     visibility: visible;
     pointer-events: auto;
-    transform: scale(1) translateY(0);
+    transform: translate(-50%, -50%) scale(1);
   }
 
   dialog::backdrop {
-    background-color: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(8px);
+    background-color: rgba(var(--m3-scheme-background) / 0.2);
+    backdrop-filter: blur(10px);
     transition: opacity 0.4s ease;
+  }
+
+  dialog.video-player-dialog {
+    width: min(94vw, 1420px);
+    height: min(calc(88vh - var(--navbar-height)), 860px);
+    max-width: 94vw;
+    max-height: calc(92vh - var(--navbar-height));
+    top: calc(50% + (var(--navbar-height) / 2));
+    border-radius: 2rem;
   }
 </style>

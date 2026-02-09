@@ -381,7 +381,7 @@
 </script>
 
 <div
-  class="!m-0 w-full liv-theme youtube-theme"
+  class="!m-0 w-full h-full liv-theme youtube-theme"
   bind:this={container}
   on:wheel={handleVolumeControl}
 >
@@ -391,7 +391,7 @@
     bind:this={video}
     {...$$restProps}
     autoplay
-    style="object-fit:contain;min-height:60vh"
+    style="object-fit:contain"
     class="w-full h-full"
   ></video>
 </div>
